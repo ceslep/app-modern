@@ -55,6 +55,7 @@ $asignacion = $normFilter($input->asignacion ?? null);
 $nivel      = $normFilter($input->nivel ?? null);
 $numero     = $normFilter($input->numero ?? null);
 $asignatura = $normFilter($input->asignatura ?? null);
+$periodo    = $normFilter($input->periodo ?? null);
 
 $needsJoin = $asignacion !== null || $nivel !== null || $numero !== null;
 $joins = '';
@@ -85,6 +86,13 @@ if ($asignatura !== null) {
     $params[] = $asignatura;
 } else {
     $conditions[] = "n.asignatura <> 'x'";
+}
+
+// Filtro de periodo (UNO..CINCO / MINIMAS). Sin él, la agregación suma
+// TODOS los periodos, mezclando cifras de cortes académicos distintos.
+if ($periodo !== null) {
+    $conditions[] = 'n.periodo = ?';
+    $params[] = $periodo;
 }
 
 $where = implode(' AND ', $conditions);

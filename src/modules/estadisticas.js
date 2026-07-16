@@ -7,6 +7,7 @@ import { $ } from '@utils/dom.js';
 
 const SEL = {
   year: 'estYear',
+  periodo: 'estPeriodo',
   sede: 'estSede',
   nivel: 'estNivel',
   numero: 'estNumero',
@@ -24,6 +25,7 @@ class EstadisticasModule {
 
   async init() {
     await this.loadYears();
+    await this.loadPeriodos();
     await this.loadSedes();
     this.bindEvents();
     this.loadStats();
@@ -59,6 +61,7 @@ class EstadisticasModule {
 
     $(SEL.numero)?.addEventListener('change', () => this.loadStats());
     $(SEL.asignatura)?.addEventListener('change', () => this.loadStats());
+    $(SEL.periodo)?.addEventListener('change', () => this.loadStats());
   }
 
   clearFrom(fromId) {
@@ -75,6 +78,7 @@ class EstadisticasModule {
   getFilters() {
     return {
       year: $(SEL.year)?.value || new Date().getFullYear(),
+      periodo: $(SEL.periodo)?.value || '',
       asignacion: $(SEL.sede)?.value || '',
       nivel: $(SEL.nivel)?.value || '',
       numero: $(SEL.numero)?.value || '',
@@ -97,6 +101,27 @@ class EstadisticasModule {
         })
         .join('');
     } catch { /* ignore */ }
+  }
+
+  async loadPeriodos() {
+    const el = $(SEL.periodo);
+    if (!el) return;
+    try {
+      const res = await filters.getPeriods();
+      const periodos = Array.isArray(res) ? res : res?.data || [];
+      const current = periodos.find((p) => p.selected === 'selected');
+      el.innerHTML = '<option value="">Todos los periodos</option>' +
+        periodos
+          .map((p) => {
+            const val = p.periodo || p.nombre || p.value || p;
+            const lbl = p.nombre || p.periodo || val;
+            const sel = current && val === (current.periodo || current.nombre) ? 'selected' : '';
+            return `<option value="${val}" ${sel}>${lbl}</option>`;
+          })
+          .join('');
+    } catch {
+      el.innerHTML = '<option value="">Todos los periodos</option>';
+    }
   }
 
   async loadSedes() {
@@ -483,7 +508,7 @@ class EstadisticasModule {
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div class="text-center p-3 bg-purple-50 rounded-lg">
               <div class="text-xs text-gray-500 uppercase tracking-wide">Media</div>
-              <div class="text-lg font-bold ${this.valColor(s.mediana)}">${s.mediana || '—'}</div>
+              <div class="text-lg font-bold ${this.valColor(s.media)}">${s.media ?? '—'}</div>
             </div>
             <div class="text-center p-3 bg-blue-50 rounded-lg">
               <div class="text-xs text-gray-500 uppercase tracking-wide">Mediana</div>
