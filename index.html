@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistema de Gestion Academica - I.E. de Occidente">
+    <meta name="theme-color" content="#543391">
+    <title>I.E. de Occidente - Sistema Academico</title>
+    <link rel="icon" type="image/png" href="./uescudo.png">
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/tabulator-tables@4.9.3/dist/css/tabulator.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/tabulator-tables@4.9.3/dist/js/tabulator.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script type="module" src="/src/main.js"></script>
+    <style>
+      /* Critical path: hide app until JS boots */
+      body { margin: 0; background: #eef0f8; font-family: system-ui, sans-serif; }
+      #boot-loader { display: flex; position: fixed; inset: 0; z-index: 9999; align-items: center; justify-content: center; background: radial-gradient(50rem 50rem at 15% -10%, rgba(139,92,246,0.25), transparent 60%), linear-gradient(160deg, #f3f1fb, #eef0f8 55%, #eaf1fb); }
+      #boot-loader > div { text-align: center; }
+      #boot-loader img { width: 72px; height: 72px; opacity: 0.5; margin-bottom: 1rem; }
+      #boot-loader .sp { width: 24px; height: 24px; border: 3px solid #e0e0e0; border-top-color: #543391; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <!-- Boot loader (hidden by JS when ready) -->
+    <div id="boot-loader">
+        <div>
+            <img src="uescudo.png" alt="">
+            <div class="sp"></div>
+        </div>
+    </div>
+
+    <!-- Aviso de mantenimiento: sin acceso al backend.
+         Inicia oculto; main.js lo muestra solo si el health check falla. -->
+    <div id="maintenance-notice" role="alert" style="display:none"
+         class="fixed top-0 left-0 right-0 z-[10000] flex items-center justify-between gap-3 px-4 py-3
+                bg-amber-50 border-b-2 border-amber-400 text-amber-900 shadow-md
+                font-sans text-sm sm:text-base">
+        <div class="flex items-center gap-3 min-w-0">
+            <i class="bi bi-exclamation-triangle-fill text-amber-500 text-xl flex-shrink-0"></i>
+            <p class="min-w-0">
+                <strong class="font-semibold">Aviso:</strong>
+                Actualmente <span class="font-semibold">no hay acceso al backend</span>.
+                Algunas funciones del sistema no estarán disponibles hasta que se restablezca el servicio.
+            </p>
+        </div>
+        <button type="button" id="maintenance-notice-close" aria-label="Cerrar aviso"
+                class="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-lg
+                       text-amber-700 hover:text-amber-900 hover:bg-amber-100 transition-all">
+            <i class="bi bi-x-lg text-base"></i>
+        </button>
+    </div>
+
+    <div id="app" class="min-h-screen font-sans">
+
+        <!-- ============================================================ -->
+        <!-- LOGIN PAGE (full-screen, visible when not authenticated)      -->
+        <!-- Hybrid shell: static wrapper keeps the autofill CSS hooks    -->
+        <!-- and prevents FOUC; the module injects content dynamically.   -->
+        <!-- ============================================================ -->
+        <div id="login-page" class="fixed inset-0 z-50 flex hidden" style="display:none">
+            <div id="login-content" class="contents"></div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- AUTHENTICATED APP LAYOUT                                     -->
+        <!-- ============================================================ -->
+        <div id="app-layout" class="hidden min-h-screen" style="display:none">
+
+            <!-- Top Navbar -->
+            <nav id="navbar" class="fixed top-0 left-0 right-0 z-40 h-16 flex items-center px-4 lg:px-6">
+            </nav>
+
+            <!-- Sidebar + Main Content wrapper -->
+            <div class="flex pt-16">
+                <!-- Sidebar -->
+                <aside id="sidebar"
+                       class="fixed left-0 top-16 bottom-0 w-64 z-30
+                              overflow-y-auto transition-transform duration-300
+                              -translate-x-full lg:translate-x-0">
+                    <!-- User Profile -->
+                    <div id="sidebar-profile" class="px-4 pt-5 pb-4 border-b border-white/10">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600
+                                        flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-purple-900/20">
+                                <span id="sidebar-avatar-text">U</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p id="sidebar-user-name" class="text-sm font-semibold text-white/90 truncate">Usuario</p>
+                                <p id="sidebar-user-role" class="text-xs text-white/40 truncate">Docente</p>
+                            </div>
+                        </div>
+                    </div>
+                    <nav class="py-3 px-2 space-y-0.5" id="sidebar-nav"></nav>
+                </aside>
+
+                <!-- Main Content -->
+                <main id="main-content"
+                      class="flex-1 ml-0 lg:ml-64 p-6 transition-all duration-300">
+
+                    <!-- Dashboard Section -->
+                    <section id="seccionDashboard" class="content-section">
+                        <div id="dashboard-content"></div>
+                    </section>
+
+                    <!-- Feature sections -->
+                    <section id="seccionInformes" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-file-earmark-text text-[#543391]"></i> Informes
+                        </h2>
+
+                        <!-- ── Consultas de Grupo (nuevo módulo, primero) ── -->
+                        <div id="consWidgetWrapper">
+                            <h3 class="section-heading mb-6">
+                                <i class="bi bi-folder-plus text-[#543391]"></i> Consultas de Grupo
+                            </h3>
+                            <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full
+                                         bg-[#543391]/10 text-[#543391] border border-[#543391]/20 mb-4" id="consBadgeMaestra">
+                                <i class="bi bi-shield-lock"></i> Solo Maestra
+                            </span>
+
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <button id="btnAbrirModalConsultas"
+                                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#543391] hover:bg-[#6f4ab3]
+                                               text-white font-medium rounded-xl shadow-sm transition-all text-sm">
+                                    <i class="bi bi-search"></i> Consultar Grupo
+                                </button>
+                            </div>
+
+                            <!-- Toolbar (shown after students load) -->
+                            <div id="consHerramientas" class="hidden glass-card p-4 mb-4">
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <span class="text-sm font-medium text-gray-600" id="infoSeleccion">0 seleccionados</span>
+                                    <div class="flex items-center gap-2">
+                                        <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-[#543391]
+                                                           focus:ring-[#543391]" id="consDescargar">
+                                        <label class="text-sm text-gray-600" for="consDescargar">Descargar automáticamente</label>
+                                    </div>
+                                    <button id="btnGenerarReportes"
+                                            class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700
+                                                   text-white font-medium rounded-lg transition-all text-sm">
+                                        <i class="bi bi-file-earmark-arrow-down"></i> Generar Informes
+                                        <span class="spinner-border spinner-border-sm hidden" id="spnGenerar"></span>
+                                    </button>
+                                </div>
+                                <!-- Progress bar -->
+                                <div class="mt-3 hidden" id="progressContainer">
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-[#543391] h-2.5 rounded-full transition-all duration-300"
+                                             id="progressBar" style="width:0%"></div>
+                                    </div>
+                                    <span class="text-xs text-gray-500 mt-1" id="progressText">0%</span>
+                                </div>
+                            </div>
+
+                            <!-- Student Results -->
+                            <div id="consResultados" class="mt-4">
+                                <p class="text-sm text-gray-400 text-center py-8">
+                                    <i class="bi bi-inbox text-4xl block mb-2 text-gray-300"></i>
+                                    Seleccione un grupo para ver los estudiantes
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- ── Formulario tradicional (mismo que @concentrador.js) ── -->
+                        <hr class="divider-gradient my-8">
+                        <h3 class="section-heading mb-6">
+                            <i class="bi bi-search text-[#543391]"></i> Consulta rápida
+                        </h3>
+                        <div class="glass-card p-3 sm:p-4 mb-3 sm:mb-4">
+                            <form id="frmConsultar" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
+                                <div>
+                                    <label class="block text-[11px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Año</label>
+                                    <select id="year" name="year" required></select>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Asignación</label>
+                                    <select id="asignacion" name="Asignacion" required>
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Nivel</label>
+                                    <select id="nivel" name="nivel" required>
+                                        <option value="">Seleccione asignación primero</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Número</label>
+                                    <select id="numero" name="numero" required>
+                                        <option value="">Seleccione nivel primero</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Período</label>
+                                    <select id="periodo" name="periodo" required>
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                </div>
+                            </form>
+                            <div class="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                                <button type="submit" form="frmConsultar"
+                                        class="px-3 sm:px-4 py-1.5 sm:py-2 bg-[#543391] hover:bg-[#432977] text-white text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap">
+                                    <i class="bi bi-search text-xs sm:text-sm"></i> Consultar
+                                </button>
+                            </div>
+                        </div>
+                        <div id="contenedorInformes" class="mt-6"></div>
+                        <div id="contenedorInformeDetalle" class="mt-6"></div>
+                    </section>
+
+                    <section id="seccionNotas" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-journal-text text-[#543391]"></i> Notas
+                        </h2>
+                        <div class="glass-card p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Asignatura</label>
+                                    <select class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                                   focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                                   transition-all bg-white" id="asignaturaNotas"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Periodo</label>
+                                    <select class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                                   focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                                   transition-all bg-white" id="periodoNotas"></select>
+                                </div>
+                                <div class="flex items-end gap-2 col-span-2 justify-end">
+                                    <button class="flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700
+                                                   text-white font-medium rounded-xl transition-all text-sm" id="cerrarNotas">
+                                        <i class="bi bi-lock"></i> Cerrar Notas
+                                    </button>
+                                    <button class="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700
+                                                   text-white font-medium rounded-xl transition-all text-sm" id="activarNotas">
+                                        <i class="bi bi-unlock"></i> Activar Notas
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="contenedorNotas" class="mt-6"></div>
+                    </section>
+
+                    <section id="seccionInasistencias" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-person-x text-[#543391]"></i> Inasistencias
+                        </h2>
+                        <div id="contenedorInasistencias"></div>
+                    </section>
+
+                    <section id="seccionConvivencia" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-people text-[#543391]"></i> Convivencia
+                        </h2>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="glass-card lg:col-span-2 p-6">
+                                <h3 class="font-semibold text-gray-700 mb-4">Registrar Convivencia</h3>
+                                <form id="frmConvivencia" class="space-y-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Tipo de Falta</label>
+                                            <select class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                                           focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                                           transition-all bg-white" id="tipoFalta" name="tipoFalta" required>
+                                                <option value="">Seleccione...</option>
+                                                <option value="1">Leve</option>
+                                                <option value="2">Grave</option>
+                                                <option value="3">Gravísima</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Fecha</label>
+                                            <input type="date" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                                           focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                                           transition-all" name="fecha" required>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Hora</label>
+                                            <select class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                                           focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                                           transition-all bg-white" id="hora" name="hora" required></select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Estudiante</label>
+                                            <input type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                                           focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                                           transition-all" name="estudiante" required>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Descripción (mín. 20 caracteres)</label>
+                                        <textarea class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                                       focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                                       transition-all" name="descripcion" rows="3" minlength="20" required></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Descargos del Estudiante</label>
+                                        <textarea class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                                       focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                                       transition-all" name="descargos" rows="2"></textarea>
+                                    </div>
+                                    <div class="text-right">
+                                        <button type="submit" id="btnGuardarConvivencia"
+                                                class="inline-flex items-center gap-2 px-5 py-2.5
+                                                       bg-[#543391] hover:bg-[#6f4ab3] text-white font-medium
+                                                       rounded-xl shadow-sm transition-all text-sm">
+                                            <i class="bi bi-save"></i> Guardar
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="glass-card p-6">
+                                <h3 class="font-semibold text-gray-700 mb-4">Registros Recientes</h3>
+                                <div id="contenedorConvivenciaEstudiante">
+                                    <p class="text-sm text-gray-400">Seleccione un estudiante</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="seccionEstadisticas" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-bar-chart text-[#543391]"></i> Estadísticas
+                        </h2>
+                        <div class="glass-card p-6 mb-6">
+                            <form id="frmEstadisticas">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Año</label>
+                                        <select class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                                       focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                                       transition-all bg-white" id="estYear"></select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Sede</label>
+                                        <select class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                                       focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                                       transition-all bg-white" id="estSede">
+                                            <option value="">Todas las sedes</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nivel</label>
+                                        <select class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                                       focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                                       transition-all bg-white" id="estNivel">
+                                            <option value="">Todos los niveles</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Grupo</label>
+                                        <select class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                                       focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                                       transition-all bg-white" id="estNumero">
+                                            <option value="">Todos los grupos</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Asignatura</label>
+                                        <select class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                                       focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                                       transition-all bg-white" id="estAsignatura">
+                                            <option value="">Todas las asignaturas</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-3 pt-4 border-t border-gray-100">
+                                    <button type="submit"
+                                            class="flex items-center gap-2 px-5 py-2.5 bg-[#543391] hover:bg-[#6f4ab3]
+                                                   text-white font-medium rounded-xl shadow-sm transition-all text-sm">
+                                        <i class="bi bi-graph-up"></i> Generar
+                                    </button>
+                                    <div class="flex items-center gap-2">
+                                        <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-[#543391]
+                                                       focus:ring-[#543391]" id="chkTablas">
+                                        <label class="text-sm text-gray-600" for="chkTablas">Mostrar gráficos</label>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div id="contenedorEstadisticas"></div>
+                    </section>
+
+                    <section id="seccionControlEstudiantes" class="content-section hidden">
+                        <!-- Dynamic content injected by control_estudiantes.js -->
+                    </section>
+
+                    <section id="seccionAsignaciones" class="content-section hidden">
+                        <!-- Dynamic content injected by asignaciones.js -->
+                    </section>
+
+                    <section id="seccionAdministracion" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-gear text-[#543391]"></i> Administración de Estudiantes
+                        </h2>
+                        <div class="glass-card p-6 mb-6">
+                            <div class="flex flex-wrap gap-3">
+                                <button class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#543391] hover:bg-[#6f4ab3]
+                                               text-white font-medium rounded-xl transition-all text-sm" id="btnsstugrupos">
+                                    <i class="bi bi-arrow-clockwise"></i> Cargar
+                                </button>
+                                <button class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700
+                                               text-white font-medium rounded-xl transition-all text-sm" id="btnnewestugrupos">
+                                    <i class="bi bi-plus-lg"></i> Nuevo Estudiante
+                                </button>
+                                <button class="inline-flex items-center gap-2 px-4 py-2.5 bg-sky-600 hover:bg-sky-700
+                                               text-white font-medium rounded-xl transition-all text-sm" id="btnnewestugruposLista">
+                                    <i class="bi bi-list"></i> Lista de Matriculación
+                                </button>
+                            </div>
+                        </div>
+                        <div id="contenedorAdministracion"></div>
+                    </section>
+
+                    <section id="seccionCertificados" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-award text-[#543391]"></i> Certificados
+                        </h2>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="glass-card p-6">
+                                <h3 class="font-semibold text-gray-700 mb-4">Generar Certificado Individual</h3>
+                                <div class="space-y-4">
+                                    <div class="flex gap-2">
+                                        <input type="text" class="flex-1 px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                                       focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                                       transition-all" id="searchStudentCert" placeholder="Buscar estudiante...">
+                                        <button class="px-3 py-2.5 border border-gray-200 rounded-xl text-gray-600
+                                                       hover:bg-gray-50 transition-all text-sm" id="btnSearchStudent">
+                                            <i class="bi bi-search"></i>
+                                        </button>
+                                    </div>
+                                    <div id="certSearchResults" class="text-sm"></div>
+                                    <div class="flex items-center gap-2 text-sm">
+                                        <span class="font-medium text-gray-600">Seleccionado:</span>
+                                        <span id="selectedStudentName" class="text-gray-400">Ninguno</span>
+                                        <input type="hidden" id="selectedStudentId">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Tipo de Certificado</label>
+                                        <select class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                                       focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                                       transition-all bg-white" id="certTemplate">
+                                            <option value="">Seleccione...</option>
+                                            <option value="constancia">Constancia de Estudio</option>
+                                            <option value="promocion">Carta de Promoción</option>
+                                            <option value="grado">Diploma de Grado</option>
+                                        </select>
+                                    </div>
+                                    <button class="w-full flex items-center justify-center gap-2 px-4 py-2.5
+                                                   bg-[#543391] hover:bg-[#6f4ab3] text-white font-medium
+                                                   rounded-xl shadow-sm transition-all text-sm" id="btnGenerateCert">
+                                        <i class="bi bi-file-earmark-pdf"></i> Generar Certificado
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="glass-card p-6 flex flex-col items-center justify-center text-center">
+                                <i class="bi bi-files text-6xl text-[#543391]/30 mb-4"></i>
+                                <p class="text-gray-600 mb-4">Genere certificados para múltiples estudiantes a la vez</p>
+                                <button class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#543391] hover:bg-[#6f4ab3]
+                                               text-white font-medium rounded-xl transition-all text-sm" id="btnBulkCert">
+                                    <i class="bi bi-arrow-right-circle"></i> Generar en Lote
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="seccionNotificaciones" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-bell text-[#543391]"></i> Notificaciones
+                        </h2>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="glass-card lg:col-span-2 p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="font-semibold text-gray-700">Notificaciones</h3>
+                                    <label class="flex items-center gap-2 text-sm text-gray-600">
+                                        <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-[#543391]
+                                                       focus:ring-[#543391]" id="mostrarTodasNotificaciones">
+                                        Mostrar todas
+                                    </label>
+                                </div>
+                                <div id="contenedorNotificaciones">
+                                    <p class="text-sm text-gray-400">Cargando notificaciones...</p>
+                                </div>
+                            </div>
+                            <div class="glass-card p-6">
+                                <h3 class="font-semibold text-gray-700 mb-4">Crear Notificación</h3>
+                                <form id="frmNotificacion" class="space-y-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Tipo</label>
+                                        <select class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                                       focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                                       transition-all bg-white" id="notificacionTipo" name="tipo" required>
+                                            <option value="">Seleccione...</option>
+                                            <option value="GENERAL">General</option>
+                                            <option value="ACADEMICO">Académico</option>
+                                            <option value="DISCIPLINARIO">Disciplinario</option>
+                                            <option value="ADMINISTRATIVO">Administrativo</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Texto</label>
+                                        <textarea class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                                       focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                                       transition-all" name="texto" rows="4" required></textarea>
+                                    </div>
+                                    <button type="submit"
+                                            class="w-full flex items-center justify-center gap-2 px-4 py-2.5
+                                                   bg-[#543391] hover:bg-[#6f4ab3] text-white font-medium
+                                                   rounded-xl transition-all text-sm">
+                                        <i class="bi bi-send"></i> Enviar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Placeholder sections -->
+                    <section id="seccionDescargas" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-download text-[#543391]"></i> Descargas
+                        </h2>
+                        <div id="contenedorDescargas"></div>
+                    </section>
+
+                    <section id="seccionDescripciones" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-card-text text-[#543391]"></i> Descripciones
+                        </h2>
+                        <div id="contenedorDescripciones"></div>
+                    </section>
+
+                    <section id="seccionPuestos" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-trophy text-[#543391]"></i> Puestos Académicos
+                        </h2>
+                        <div id="contenedorPuestos"></div>
+                    </section>
+
+                    <section id="seccionControlInasistencias" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-clipboard-check text-[#543391]"></i> Control de Asistencia
+                        </h2>
+                        <div id="contenedorControlAsistencia"></div>
+                    </section>
+
+                    <section id="seccionObservador" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-eye text-[#543391]"></i> Observador
+                        </h2>
+                        <div class="glass-card p-12 text-center">
+                            <i class="bi bi-tools text-5xl text-gray-300 mb-4 block"></i>
+                            <p class="text-gray-400">Módulo en desarrollo</p>
+                        </div>
+                    </section>
+
+                    <section id="seccionConsolidadoInasistencias" class="content-section hidden">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="section-heading mb-0">
+                                <i class="bi bi-bar-chart-line text-[#543391]"></i> Consolidado de Inasistencias
+                            </h2>
+                        </div>
+                        <div id="contenedorConsolidadoInasistencias"></div>
+                    </section>
+
+                    <section id="seccionSubirNotas" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-upload text-[#543391]"></i> Subir Notas
+                        </h2>
+                        <div class="glass-card p-12 text-center">
+                            <i class="bi bi-tools text-5xl text-gray-300 mb-4 block"></i>
+                            <p class="text-gray-400">Módulo en desarrollo</p>
+                        </div>
+                    </section>
+
+                    <section id="seccionTiemposDocentes" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-clock text-[#543391]"></i> Tiempos Docentes
+                        </h2>
+                        <div class="glass-card p-12 text-center">
+                            <i class="bi bi-tools text-5xl text-gray-300 mb-4 block"></i>
+                            <p class="text-gray-400">Módulo en desarrollo</p>
+                        </div>
+                    </section>
+
+                    <section id="seccionHistoricoDocentes" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-clock-history text-[#543391]"></i> Histórico Docentes
+                        </h2>
+                        <div class="glass-card p-12 text-center">
+                            <i class="bi bi-tools text-5xl text-gray-300 mb-4 block"></i>
+                            <p class="text-gray-400">Módulo en desarrollo</p>
+                        </div>
+                    </section>
+
+                    <section id="seccionMensajeNotas" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-chat-dots text-[#543391]"></i> Mensaje Notas
+                        </h2>
+                        <div class="glass-card p-12 text-center">
+                            <i class="bi bi-tools text-5xl text-gray-300 mb-4 block"></i>
+                            <p class="text-gray-400">Módulo en desarrollo</p>
+                        </div>
+                    </section>
+
+                    <section id="seccionCerrarNotas" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-lock text-[#543391]"></i> Cerrar Notas
+                        </h2>
+                        <div class="glass-card p-12 text-center">
+                            <i class="bi bi-tools text-5xl text-gray-300 mb-4 block"></i>
+                            <p class="text-gray-400">Módulo en desarrollo</p>
+                        </div>
+                    </section>
+
+                    <section id="seccionActivarNotas" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-unlock text-[#543391]"></i> Activar Notas
+                        </h2>
+                        <div class="glass-card p-12 text-center">
+                            <i class="bi bi-tools text-5xl text-gray-300 mb-4 block"></i>
+                            <p class="text-gray-400">Módulo en desarrollo</p>
+                        </div>
+                    </section>
+
+                    <section id="seccionCantidades" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-123 text-[#543391]"></i> Consultar Cantidades
+                        </h2>
+                        <div class="glass-card p-12 text-center">
+                            <i class="bi bi-tools text-5xl text-gray-300 mb-4 block"></i>
+                            <p class="text-gray-400">Módulo en desarrollo</p>
+                        </div>
+                    </section>
+
+                    <section id="seccionVerificarFinales" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-check-circle text-[#543391]"></i> Verificar Finales
+                        </h2>
+                        <div class="glass-card p-12 text-center">
+                            <i class="bi bi-tools text-5xl text-gray-300 mb-4 block"></i>
+                            <p class="text-gray-400">Módulo en desarrollo</p>
+                        </div>
+                    </section>
+
+                    <section id="seccionLog" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-list-task text-[#543391]"></i> Log del Sistema
+                        </h2>
+                        <div class="glass-card p-12 text-center">
+                            <i class="bi bi-tools text-5xl text-gray-300 mb-4 block"></i>
+                            <p class="text-gray-400">Módulo en desarrollo</p>
+                        </div>
+                    </section>
+
+                    <section id="seccionDocentes" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-person-badge text-[#543391]"></i> Docentes
+                        </h2>
+                        <div class="glass-card p-12 text-center">
+                            <i class="bi bi-tools text-5xl text-gray-300 mb-4 block"></i>
+                            <p class="text-gray-400">Módulo en desarrollo</p>
+                        </div>
+                    </section>
+
+                    <section id="seccionConcentradorNotas" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-table text-[#543391]"></i> Concentrador Académico
+                        </h2>
+                        <div class="glass-card p-12 text-center">
+                            <i class="bi bi-tools text-5xl text-gray-300 mb-4 block"></i>
+                            <p class="text-gray-400">Módulo en desarrollo</p>
+                        </div>
+                    </section>
+
+                    <section id="seccionConsolidadoConvivencia" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-people-fill text-[#543391]"></i> Consolidado de Convivencia
+                        </h2>
+                        <div class="glass-card p-12 text-center">
+                            <i class="bi bi-tools text-5xl text-gray-300 mb-4 block"></i>
+                            <p class="text-gray-400">Módulo en desarrollo</p>
+                        </div>
+                    </section>
+
+                    <section id="seccionConsultaEstudiante" class="content-section hidden">
+                        <h2 class="section-heading mb-6">
+                            <i class="bi bi-search text-[#543391]"></i> Consultar Datos Estudiante
+                        </h2>
+                        <div class="glass-card p-12 text-center">
+                            <i class="bi bi-tools text-5xl text-gray-300 mb-4 block"></i>
+                            <p class="text-gray-400">Módulo en desarrollo</p>
+                        </div>
+                    </section>
+                </main>
+            </div>
+        </div>
+
+        <!-- Modal Consultas (group query dialog) -->
+        <div id="modalConsultas" class="hidden fixed inset-0 z-[1056] flex items-center justify-center" style="display:none">
+            <div class="relative z-[1060] w-full max-w-lg mx-4 bg-white rounded-2xl shadow-2xl">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600
+                                    flex items-center justify-center text-white">
+                            <i class="bi bi-search text-sm"></i>
+                        </div>
+                        <div>
+                            <h5 class="text-base font-semibold text-gray-800">Consultar Grupo</h5>
+                            <p class="text-xs text-gray-400">Seleccione los filtros para buscar estudiantes</p>
+                        </div>
+                    </div>
+                    <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg
+                                              text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all"
+                            data-modal-dismiss="modalConsultas">
+                        <i class="bi bi-x-lg text-sm"></i>
+                    </button>
+                </div>
+                <div class="px-6 py-4">
+                    <form id="frmConsultas" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Año</label>
+                                <select class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                               focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                               transition-all bg-white" id="consYear" required></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Sede</label>
+                                <select class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                               focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                               transition-all bg-white" id="consAsignacion" required></select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Grado</label>
+                                <select class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                               focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                               transition-all bg-white" id="consNivel" required>
+                                    <option value="">Seleccione sede primero</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Grupo</label>
+                                <select class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                               focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                               transition-all bg-white" id="consNumero" required>
+                                    <option value="">Seleccione grado primero</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Período</label>
+                                <select class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
+                                               focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                               transition-all bg-white" id="consPeriodo" required></select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl">
+                    <button type="button" data-modal-dismiss="modalConsultas"
+                            class="px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100
+                                   rounded-xl transition-all">
+                        Cancelar
+                    </button>
+                    <button type="button" id="btnCargarEstudiantes"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#543391] hover:bg-[#6f4ab3]
+                                   text-white font-medium rounded-xl shadow-sm transition-all text-sm">
+                        <i class="bi bi-search"></i> Aceptar
+                        <span class="spinner-border spinner-border-sm hidden" id="spnCargarConsulta"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden Modals Container -->
+        <div id="modal-container"></div>
+
+        <!-- Fullscreen Spinner -->
+        <div id="fullscreen-spinner" class="hidden fixed inset-0 bg-white/80 z-[9999] flex items-center justify-center">
+            <div class="text-center">
+                <div class="w-12 h-12 border-4 border-[#543391] border-t-transparent rounded-full animate-spin mx-auto"></div>
+            </div>
+        </div>
+
+        <!-- Toast Container -->
+        <div class="toast-container fixed top-4 right-4 z-[1060] space-y-2" id="toast-container"></div>
+    </div>
+</body>
+</html>

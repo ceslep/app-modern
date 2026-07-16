@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview Notas UI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://unpkg.com/tabulator-tables@4.9.3/dist/css/tabulator.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/tabulator-tables@4.9.3/dist/js/tabulator.min.js"></script>
+  <style>
+    body{margin:0;min-height:100vh;font-family:Inter,sans-serif;
+      background:radial-gradient(50rem 50rem at 15% -10%,rgba(139,92,246,.25),transparent 60%),linear-gradient(160deg,#f3f1fb,#eef0f8 55%,#eaf1fb);}
+    /* Tailwind-ish utilities the markup uses */
+    .hidden{display:none}.mb-4{margin-bottom:1rem}.mb-2{margin-bottom:.5rem}
+    .flex{display:flex}.items-center{align-items:center}.justify-between{justify-content:space-between}
+    .justify-center{justify-content:center}.flex-wrap{flex-wrap:wrap}.gap-2{gap:.5rem}.w-full{width:100%}
+    .text-xs{font-size:.75rem}
+  </style>
+</head>
+<body>
+  <section id="seccionNotas" style="max-width:1100px;margin:2rem auto;padding:1rem"></section>
+  <script type="module">
+    import raw from '/src/modules/notas.js?raw';
+    // Extract STYLE.textContent template literal
+    const m = raw.match(/STYLE\.textContent\s*=\s*`([\s\S]*?)`;\s*\ndocument\.head\.appendChild/);
+    const css = m ? m[1] : '/* NO STYLE MATCH */';
+    const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+
+    const user = { nombres: 'María Fernanda Restrepo' };
+    const sec = document.getElementById('seccionNotas');
+    sec.classList.add('notas-module');
+    sec.innerHTML = `
+      <h2 class="nt-heading"><i class="bi bi-journal-text"></i> Registrar Notas</h2>
+      <div class="nt-toast" role="alert" id="notasAlert">
+        <span class="flex items-center gap-2"><i class="bi bi-info-circle nt-toast-ico"></i><span id="notasAviso">Recuerde cerrar el periodo antes del viernes.</span></span>
+        <button type="button" class="nt-toast-close" aria-label="Cerrar"><i class="bi bi-x-lg text-xs"></i></button>
+      </div>
+      <div id="notasMenuContainer" class="mb-4">
+        <div class="nt-card" style="padding:1rem 1.25rem"><label class="nt-field-label">Seleccionar materia</label>
+          <div style="padding:.6rem .85rem;background:var(--nt-glass-hi);border:1px solid rgba(31,17,66,.12);border-radius:14px;font-size:.9rem;color:#5b5470">Matemáticas · Grado 7</div>
+        </div>
+      </div>
+      <div class="nt-card nt-card--delay mb-4" style="z-index:1">
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
+          <span id="notasDocenteNombre" class="nt-docente-name">${user.nombres}</span>
+          <div id="notasCoordiActions" style="position:relative;z-index:2">
+            <button type="button" id="btnSelDocente" class="nt-btn-primary nt-btn-accent"><i class="bi bi-person-plus"></i>Seleccionar Docente</button>
+          </div>
+        </div>
+        <div class="nt-asig-wrap"><span id="notasAsignaturaLabel" class="nt-asig-label">Matemáticas 7-2 · P1</span></div>
+        <div class="notas-percent-bar" id="notasPercentBar">
+          <div style="flex:0 0 35%" data-tip="SABER — 35% (3 notas)">SABER 35%</div>
+          <div style="flex:0 0 35%" data-tip="HACER — 35% (3 notas)">HACER 35%</div>
+          <div style="flex:0 0 20%" data-tip="SER — 20% (3 notas)">SER 20%</div>
+          <div style="flex:0 0 5%" data-tip="AUTOEVALUACIÓN — 5%">AUTOEV 5%</div>
+          <div style="flex:0 0 5%" data-tip="COEVALUACIÓN — 5%">COEV 5%</div>
+        </div>
+      </div>
+      <div id="notasTableContainer" class="w-full"><div class="notas-table-glass"><div id="tbl"></div></div></div>
+      <button class="float-save-btn float-save-btn--primary" id="notasSaveBtn" aria-label="Guardar notas"><i class="bi bi-floppy" style="font-size:1.4rem"></i></button>
+      <button class="float-save-btn float-save-btn--accent" id="notasCalcBtn" style="right:102px" aria-label="Recalcular"><i class="bi bi-calculator" style="font-size:1.4rem"></i></button>
+    `;
+
+    const data = [
+      { Nombres:'Ana López', Val:'4.2', N1:4,N2:5,N3:3, N4:4,N5:4,N6:3 },
+      { Nombres:'Carlos Ruiz', Val:'2.8', N1:2,N2:3,N3:3, N4:2,N5:3,N6:2 },
+      { Nombres:'Diana Peña', Val:'3.9', N1:4,N2:4,N3:3 },
+    ];
+    const cols=[{title:'Estudiante',field:'Nombres',width:220,headerFilter:'input'},
+      {title:'Def.',field:'Val',hozAlign:'center',width:60,formatter:c=>{const v=c.getValue();const cls=parseFloat(v)>=3?'color:#166534;font-weight:700':'color:#b91c1c;font-weight:700';return `<span style="${cls}">${parseFloat(v).toFixed(1)}</span>`;}}];
+    for(let i=1;i<=6;i++)cols.push({title:`N${i}`,field:`N${i}`,hozAlign:'center',width:55,editor:'number'});
+    new Tabulator('#tbl',{height:'320px',layout:'fitDataFill',data,columns:cols,headerSort:false,
+      rowFormatter:row=>{const cells=row.getCells();const d=row.getData();
+        cells[1]?.getElement().style.setProperty('background',parseFloat(d.Val)>=3?'green':'red');
+        cells[1]?.getElement().style.setProperty('color','white');
+        const ranges=[{s:2,e:4,bg:'#e7ffe7'},{s:5,e:7,bg:'#ffeee1'}];
+        for(const r of ranges)for(let i=r.s;i<=r.e&&i<cells.length;i++)cells[i]?.getElement().style.setProperty('background',r.bg);
+      }});
+
+    window.__ready = true;
+  </script>
+</body>
+</html>

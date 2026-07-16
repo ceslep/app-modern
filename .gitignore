@@ -1,0 +1,35 @@
+# Env — sensible
+.env
+
+# Dependencies
+node_modules/
+
+# Build
+dist/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+error_log
+npm-debug.log*
+
+# Credenciales hardcodeadas legacy
+*datos_conexion*
+*datosConexion*
+
+# BFG cleanup report
+.git.bfg-report/
+
+# Temp
+.tmp/
+.cache/
+
+# DB dumps
+*.sql

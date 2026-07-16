@@ -1,0 +1,32 @@
+{
+  "name": "ie-de-occidente",
+  "version": "1.0.0",
+  "description": "Sistema de Gestión Académica - I.E. de Occidente",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format": "prettier --write src/"
+  },
+  "dependencies": {
+    "bootstrap-icons": "^1.11.2",
+    "chart.js": "^4.4.1",
+    "dayjs": "^1.11.10",
+    "signature_pad": "^4.1.7",
+    "sweetalert2": "^11.10.2",
+    "tabulator-tables": "^5.5.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@tailwindcss/vite": "^4.3.2",
+    "eslint": "^9.0.0",
+    "globals": "^15.0.0",
+    "prettier": "^3.2.0",
+    "tailwindcss": "^4.3.2",
+    "terser": "^5.27.0",
+    "vite": "^5.0.12"
+  }
+}

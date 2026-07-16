@@ -1,0 +1,38 @@
+schema: spec-driven
+
+# Contexto del proyecto — se muestra a la IA al crear artifacts.
+context: |
+  Sistema de Gestión Académica para I.E. de Occidente (PHP + vanilla JS + Vite + Tailwind).
+  
+  Stack:
+  - Frontend: vanilla JS (sin framework), Vite 5, Tailwind CSS 4
+  - Backend: PHP (legacy router + modern controllers), MySQL
+  - Vite dev server con proxy a Apache/XAMPP en localhost
+  
+  Convenciones:
+  - JS: ES modules, sin TypeScript, naming en español para variables de dominio
+  - PHP: mysqli procedural, snake_case, sin composer
+  - Endpoints PHP en server/legacy/ (compatibilidad) o server/routes/api.php (moderno)
+  - Skills opencode: .opencode/skills/, .agents/skills/
+  - Documentación de planes en openspec/changes/, openspec/specs/
+
+  Dominio: sistema académico para colegio (notas, estudiantes, docentes, períodos, asignaturas)
+
+# Reglas por artifact — convenciones específicas del proyecto
+rules:
+  proposal:
+    - Incluir "Por qué" antes de "Qué cambia" (justificar antes de describir)
+    - Listar archivos afectados estimados para detectar impacto
+    - Incluir "No-objetivos" si el alcance es ambiguo
+  design:
+    - Mencionar impacto en performance si toca queries o renders
+    - Listar endpoints PHP afectados si hay cambios backend
+    - Indicar si requiere cambios en el schema (CREATE/ALTER)
+  tasks:
+    - Numerar como 1.1, 1.2, 2.1 (jerárquico)
+    - Marcar tareas de verificación (npm run build, php -l) como obligatorias
+    - Incluir tarea de "verificar en navegador" para cambios UI
+    - Incluir tarea de "verificar en mobile" si aplica
+  specs:
+    - Usar formato Given/When/Then para scenarios
+    - Incluir al menos un scenario de "edge case"

@@ -1,0 +1,821 @@
+crea un nuevo modulo para
+<div id="controlEstudiantes" class="menuTop d-none mx-10 pt-3">
+        <div class="container row">
+            <div class="col-12 col-sm-3 col-md-2">
+                <h5>
+                    <a href="#" class="fs-4 text-decoration-none" id="btnsearchestugrupos">🔍</a>
+                    <a href="#" class="fs-4 text-decoration-none" id="btnnewestugrupos">💡</a>
+                    <a href="#" class="fs-4 text-decoration-none" id="btnnewestugruposLista">📥</a>
+                    <a href="#" class="fs-4 text-decoration-none" id="btncodigos">📱</a>
+                    <a href="#" class="fs-4 text-decoration-none" id="btnprtcodigos">🖨️</a>
+                </h5>
+            </div>
+            <div class="col-12 col-sm-12 col-md-3 pt-1 pt-sm-0">
+                <div class="row">
+                    <div class="col-8">
+                        <select id="yearestugrupos" class="yearin form-select"></select>
+                    </div>
+                    <div class="col-4">
+                        <button class="btn btn-primary" id="btnsstugrupos">Ir</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-4 col-sm-3 col-md-2 pt-1 pt-sm-0">
+                <div class="btn-group dropend">
+                    <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <span id="titlefilterestus">Filtros</span>
+                    </button>
+                    <ul class="dropdown-menu" id="filtrosddEstudiantes">
+                        <li><a class="dropdown-item" data-filter="f0" href="#">Activos</a></li>
+                        <li><a class="dropdown-item" data-filter="f1" href="#">Inactivos</a></li>
+                        <li><a class="dropdown-item" data-filter="f2" href="#">Desertores</a></li>
+                        <li><a class="dropdown-item" data-filter="f3" href="#">Banda</a></li>
+                        <li><a class="dropdown-item" data-filter="f4" href="#">HED</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" data-filter="fb" href="#">Borrar Filtro</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-4 col-sm-3 col-md-3  pt-1 pt-sm-0">
+                <div class="btn-group dropend">
+                    <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <span id="fsedesTitle">Sede</span>
+                    </button>
+                    <ul class="dropdown-menu" id="filtrosddSedes">
+                        <div class="ffsedes">
+
+                        </div>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" data-sede="fb" href="#">Borrar Filtro</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-4 col-sm-3 col-md-2  pt-1 pt-sm-0">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <span id="fgradosTitle">Grados</span>
+                    </button>
+                    <ul class="dropdown-menu" id="filtrosddGrados">
+                        <div class="ffgrados">
+
+                        </div>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" data-grado="fb" href="#">Borrar Filtro</a></li>
+                    </ul>
+                </div>
+            </div>
+
+
+        </div>
+        <div class="table-responsive pt-1" id="tablaControlEstudiantes">
+
+        </div>
+        <div id="spnconestudiantes" class="d-flex justify-content-center align-items-center d-none">
+            <div class="spinner-border text-success" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+
+esto esta controlado en js por 
+
+const getEstugrupos = async (year) => {
+    const spnconestudiantes = document.getElementById("spnconestudiantes");
+    const tablaControlEstudiantes = document.getElementById("tablaControlEstudiantes");
+    tablaControlEstudiantes.innerHTML = '';
+    spnconestudiantes.classList.toggle("d-none");
+    const response = await fetch("getEstugrupos.php", {
+        method: "POST",
+        body: JSON.stringify({ year })
+    });
+    const estugrupos = await response.json();
+
+    let html = `
+    <style>
+    .fluent-table-container {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        overflow: hidden;
+        font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .fluent-header {
+        background: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
+        color: white;
+        padding: 16px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+        position: relative;
+    }
+    .fluent-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .fluent-title i { font-size: 1.5rem; }
+    .fluent-search {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    .fluent-search i {
+        position: absolute;
+        left: 14px;
+        color: rgba(255,255,255,0.7);
+    }
+    .fluent-search input {
+        padding: 10px 16px 10px 40px;
+        border: none;
+        border-radius: 4px;
+        background: rgba(255,255,255,0.15);
+        color: white;
+        width: 260px;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+    }
+    .fluent-search input::placeholder { color: rgba(255,255,255,0.7); }
+    .fluent-search input:focus {
+        background: white;
+        color: #323130;
+        outline: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        width: 320px;
+    }
+    .fluent-count {
+        background: rgba(255,255,255,0.2);
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 0.85rem;
+    }
+    .fluent-table-wrapper {
+        overflow-x: auto;
+        max-height: 65vh;
+        overflow-y: auto;
+    }
+    .fluent-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1100px;
+    }
+    .fluent-table thead th {
+        background: #F3F2F1;
+        padding: 12px 10px;
+        font-weight: 600;
+        color: #323130;
+        border-bottom: 2px solid #E1DFDD;
+        position: sticky;
+        top: 0;
+        backdrop-filter: blur(8px);
+        white-space: nowrap;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .fluent-table thead th:hover {
+        background: #E1DFDD;
+    }
+    .fluent-table thead th .sort-icon {
+        opacity: 0.4;
+        margin-left: 4px;
+        font-size: 0.7rem;
+    }
+    .fluent-table thead th.sorted .sort-icon {
+        opacity: 1;
+        color: #0078D4;
+    }
+    .fluent-table tbody tr {
+        transition: background 0.15s;
+    }
+    .fluent-table tbody tr:hover {
+        background: #EBF5FF;
+    }
+    .fluent-table td {
+        padding: 10px 12px;
+        vertical-align: middle;
+        border-bottom: 1px solid #EDEBE9;
+        font-size: 0.875rem;
+        color: #323130;
+    }
+    .fluent-table tbody tr:nth-child(even) {
+        background: #FAFAFA;
+    }
+    .fluent-table tbody tr:nth-child(even):hover {
+        background: #EBF5FF;
+    }
+    .fluent-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    /* Botón Editar - Azul */
+    .fluent-btn-edit {
+        background: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
+        color: white;
+    }
+    .fluent-btn-edit:hover {
+        background: linear-gradient(135deg, #005A9E 0%, #0B5A9E 100%);
+        box-shadow: 0 4px 12px rgba(0,120,212,0.4);
+        transform: translateY(-1px);
+        color: white;
+    }
+    .fluent-btn-edit:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    /* Botón Historial - Verde */
+    .fluent-btn-history {
+        background: linear-gradient(135deg, #107C10 0%, #0F6B0F 100%);
+        color: white;
+    }
+    .fluent-btn-history:hover {
+        background: linear-gradient(135deg, #0B5A0B 0%, #0A4F0A 100%);
+        box-shadow: 0 4px 12px rgba(16,124,16,0.4);
+        transform: translateY(-1px);
+        color: white;
+    }
+    .fluent-btn-history:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    /* Botón Cambiar - Naranja */
+    .fluent-btn-change {
+        background: linear-gradient(135deg, #D83B01 0%, #C3360B 100%);
+        color: white;
+    }
+    .fluent-btn-change:hover {
+        background: linear-gradient(135deg, #A4262C 0%, #8B1A1A 100%);
+        box-shadow: 0 4px 12px rgba(216,59,1,0.4);
+        transform: translateY(-1px);
+        color: white;
+    }
+    .fluent-btn-change:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    /* Botón Código - Gris oscuro */
+    .fluent-btn-code {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        background: linear-gradient(135deg, #5B5B5B 0%, #4A4A4A 100%);
+        border: none;
+        border-radius: 6px;
+        color: white;
+        font-weight: 600;
+        font-family: 'Cascadia Code', 'Consolas', monospace;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        transition: all 0.2s ease;
+    }
+    .fluent-btn-code:hover {
+        background: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
+        box-shadow: 0 4px 12px rgba(0,120,212,0.4);
+        transform: translateY(-1px);
+        color: white;
+    }
+    .fluent-btn-code:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    /* Spinner states */
+    .fluent-btn-history .fluent-spinner.show,
+    .fluent-btn-change .fluent-spinner.show {
+        display: flex;
+        justify-content: center;
+    }
+    .fluent-row-num {
+        color: #A19F9D;
+        font-weight: 500;
+        font-size: 0.8rem;
+    }
+    .fluent-cell-code {
+        font-family: 'Cascadia Code', 'Consolas', monospace;
+        font-size: 0.8rem;
+        color: #605E5C;
+    }
+    .fluent-cell-id {
+        font-weight: 600;
+        color: #0078D4;
+    }
+    .fluent-icon {
+        font-size: 1.1rem;
+    }
+    .fluent-spinner {
+        display: none;
+    }
+    .fluent-spinner.show {
+        display: flex;
+        justify-content: center;
+    }
+    .fluent-spinner .spinner-grow {
+        width: 18px;
+        height: 18px;
+    }
+    @media (max-width: 768px) {
+        .fluent-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .fluent-search {
+            width: 100%;
+        }
+        .fluent-search input {
+            width: 100% !important;
+        }
+    }
+    /* Badge styles */
+    .fluent-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .fluent-badge-active {
+        background: linear-gradient(135deg, #107C10 0%, #0B5A0A 100%);
+        color: white;
+        box-shadow: 0 2px 4px rgba(16,124,16,0.3);
+    }
+    .fluent-badge-inactive {
+        background: linear-gradient(135deg, #A80000 0%, #750000 100%);
+        color: white;
+        box-shadow: 0 2px 4px rgba(168,0,0,0.3);
+    }
+    .fluent-badge-hed {
+        background: linear-gradient(135deg, #D13438 0%, #A4262C 100%);
+        color: white;
+        box-shadow: 0 2px 4px rgba(209,52,56,0.3);
+    }
+    .fluent-badge-normal {
+        background: linear-gradient(135deg, #6B6B6B 0%, #4A4A4A 100%);
+        color: white;
+        box-shadow: 0 2px 4px rgba(107,107,107,0.3);
+    }
+    </style>
+    <div class="fluent-table-container">
+        <div class="fluent-header">
+            <div class="fluent-title">
+                <i class="bi bi-people-fill" style="font-size: 1.5rem;"></i> 
+                <span>Control de Estudiantes</span>
+                <span class="fluent-count" id="spnconestudiantesCount">${estugrupos.length} registros</span>
+                <span id="searchLoading" class="d-none ms-2">
+                    <div class="spinner-border spinner-border-sm text-white" role="status" style="width: 18px; height: 18px;">
+                        <span class="visually-hidden">Buscando...</span>
+                    </div>
+                </span>
+            </div>
+            <div class="fluent-search">
+                <i class="bi bi-search"></i>
+                <input type="text" id="searchEstugrupos" placeholder="Buscar estudiantes por nombre, código, sede...">
+            </div>
+        </div>
+        <div class="fluent-table-wrapper">
+            <table class="fluent-table" id="estugruposTable">
+                <thead>
+                    <tr id="adesthead">
+                        <th class="text-center" data-column="index"><i class="bi bi-hash" style="color: #0078D4;"></i> # <i class="bi bi-chevron-expand sort-icon"></i></th>
+                        <th class="text-center" data-column="edit" title="Editar"><i class="bi bi-pencil-square" style="color: #0078D4;"></i></th>
+                        <th class="text-center" data-column="history" title="Historial"><i class="bi bi-clock-history" style="color: #107C10;"></i></th>
+                        <th class="text-center" data-column="change" title="Cambiar"><i class="bi bi-shuffle" style="color: #D83B01;"></i></th>
+                        <th data-column="codigo"><i class="bi bi-qr-code" style="color: #5B5B5B;"></i> Código <i class="bi bi-chevron-expand sort-icon"></i></th>
+                        <th data-column="estudiante"><i class="bi bi-person-badge" style="color: #0078D4;"></i> Estudiante <i class="bi bi-chevron-expand sort-icon"></i></th>
+                        <th data-column="nombres"><i class="bi bi-type" style="color: #0078D4;"></i> Nombres <i class="bi bi-chevron-expand sort-icon"></i></th>
+                        <th data-column="sede"><i class="bi bi-building" style="color: #107C10;"></i> Sede <i class="bi bi-chevron-expand sort-icon"></i></th>
+                        <th class="text-center" data-column="genero"><i class="bi bi-gender-ambiguous" style="color: #8764B8;"></i> Género <i class="bi bi-chevron-expand sort-icon"></i></th>
+                        <th class="text-center" data-column="edad"><i class="bi bi-calendar-check" style="color: #D83B01;"></i> Edad <i class="bi bi-chevron-expand sort-icon"></i></th>
+                        <th class="text-center" data-column="grado"><i class="bi bi-mortarboard" style="color: #0078D4;"></i> Grado <i class="bi bi-chevron-expand sort-icon"></i></th>
+                        <th class="text-center" data-column="year"><i class="bi bi-calendar3" style="color: #5B5B5B;"></i> Año <i class="bi bi-chevron-expand sort-icon"></i></th>
+                        <th class="text-center" data-column="activo"><i class="bi bi-toggle-on" style="color: #107C10;"></i> Activo <i class="bi bi-chevron-expand sort-icon"></i></th>
+                        <th class="text-center" data-column="hed"><i class="bi bi-heart-pulse" style="color: #D13438;"></i> HED <i class="bi bi-chevron-expand sort-icon"></i></th>
+                    </tr>
+                </thead>
+                <tbody id="estugruposBody">
+    `;
+
+    estugrupos.forEach((estus, index) => {
+        const { codigo, estudiante, nombres, sede, genero, edad, nivel, numero, activo, HED, year } = estus;
+        const dataestudiante = JSON.stringify(estus);
+        const isActive = activo === 'S';
+        const isMale = genero === 'F';
+        const hasHED = HED === 'S';
+        const grado = `${nivel}-${numero}`;
+
+        html += `
+        <tr data-index="${index}">
+            <td class="text-center fluent-row-num">${index + 1}</td>
+            <td class="text-center">
+                <button class="fluent-btn fluent-btn-edit modale" data-est='${dataestudiante}' title="Editar estudiante">
+                    <i class="bi bi-pencil-square fluent-icon"></i>
+                </button>
+            </td>
+            <td class="text-center">
+                <button class="fluent-btn fluent-btn-history modalh" data-est='${dataestudiante}' title="Ver historial">
+                    <i class="bi bi-clock-history fluent-icon"></i>
+                </button>
+                <div class="fluent-spinner d-none">
+                    <div class="spinner-grow text-light" role="status" style="width: 14px; height: 14px;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </td>
+            <td class="text-center">
+                <button class="fluent-btn fluent-btn-change modalchg" data-est='${dataestudiante}' title="Cambiar grupo">
+                    <i class="bi bi-shuffle fluent-icon"></i>
+                </button>
+                <div class="fluent-spinner d-none">
+                    <div class="spinner-grow text-light" role="status" style="width: 14px; height: 14px;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </td>
+            <td class="text-center">
+                <button class="fluent-btn-code prtcodigo" data-codigo="${codigo}">${codigo}</button>
+            </td>
+            <td class="text-center fluent-cell-id">${estudiante}</td>
+            <td>${nombres}</td>
+            <td>${sede}</td>
+            <td class="text-center">
+                <span style="font-size: 1.2rem;">${isMale ? '👦' : '👧'}</span>
+            </td>
+            <td class="text-center">${edad}</td>
+            <td class="text-center"><i class="bi bi-mortarboard-fill" style="color: #0078D4;"></i> ${grado}</td>
+            <td class="text-center">${year}</td>
+            <td class="text-center">
+                <span class="badge rounded-pill" style="background: ${isActive ? 'linear-gradient(135deg, #107C10, #0B5A0A)' : 'linear-gradient(135deg, #A80000, #750000)'}; color: white; padding: 4px 10px; font-size: 0.75rem;">
+                    ${isActive ? '✓ Activo' : '✗ Inactivo'}
+                </span>
+            </td>
+            <td class="text-center">
+                <span class="badge rounded-pill" style="background: ${hasHED ? 'linear-gradient(135deg, #D13438, #A4262C)' : 'linear-gradient(135deg, #6B6B6B, #4A4A4A)'}; color: white; padding: 4px 10px; font-size: 0.75rem;">
+                    ${hasHED ? '❤️‍🩹 HED' : '💚 Normal'}
+                </span>
+            </td>
+        </tr>
+        `;
+    });
+
+    html += `
+                </tbody>
+            </table>
+        </div>
+    </div>
+    `;
+
+    spnconestudiantes.classList.toggle("d-none");
+    tablaControlEstudiantes.innerHTML = html;
+    CELDAFILTRO = '';
+    FILTRO = '';
+
+    initEstugruposTable();
+
+    document.getElementById("titlefilterestus").textContent = 'Filtros';
+    document.getElementById("fsedesTitle").textContent = 'Sede';
+    document.getElementById("fgradosTitle").textContent = 'Grados';
+}
+
+function initEstugruposTable() {
+    const table = document.getElementById('estugruposTable');
+    const searchInput = document.getElementById('searchEstugrupos');
+    const tbody = document.getElementById('estugruposBody');
+
+    if (!table || !searchInput || !tbody) return;
+
+    let allRows = Array.from(tbody.querySelectorAll('tr'));
+    let searchTexts = [];
+    let searchTerm = '';
+    let externalFilter = null;
+    let searchTimeout = null;
+    let currentSort = { column: null, direction: 'asc' };
+    let rafId = null;
+
+    const columnIndices = {
+        codigo: 4,
+        estudiante: 5,
+        nombres: 6,
+        sede: 7,
+        grado: 10,
+        year: 11
+    };
+
+    searchTexts = allRows.map(row => {
+        const cells = row.children;
+        return [
+            cells[columnIndices.codigo]?.textContent || '',
+            cells[columnIndices.estudiante]?.textContent || '',
+            cells[columnIndices.nombres]?.textContent || '',
+            cells[columnIndices.sede]?.textContent || '',
+            cells[columnIndices.grado]?.textContent || '',
+            cells[columnIndices.year]?.textContent || ''
+        ].join(' ').toLowerCase();
+    });
+
+    function render() {
+        if (rafId) cancelAnimationFrame(rafId);
+
+        rafId = requestAnimationFrame(() => {
+            let visibleCount = 0;
+            const term = searchTerm.toLowerCase();
+
+            for (let i = 0; i < allRows.length; i++) {
+                const row = allRows[i];
+                const matchesSearch = !term || searchTexts[i].indexOf(term) !== -1;
+                const matchesFilter = !externalFilter || externalFilter(row);
+                const shouldShow = matchesSearch && matchesFilter;
+
+                if (shouldShow) {
+                    row.classList.remove('d-none');
+                    visibleCount++;
+                } else {
+                    row.classList.add('d-none');
+                }
+            }
+
+            const countSpan = document.getElementById('spnconestudiantesCount');
+            if (countSpan) {
+                countSpan.textContent = term ? `${visibleCount} / ${allRows.length}` : `${allRows.length} registros`;
+            }
+
+            rafId = null;
+        });
+    }
+
+    searchInput.addEventListener('input', function () {
+        const loading = document.getElementById('searchLoading');
+        if (loading) loading.classList.remove('d-none');
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(function () {
+            searchTerm = searchInput.value.trim();
+            render();
+            if (loading) loading.classList.add('d-none');
+        }, 50);
+    });
+
+    // --- Ordenamiento por columnas ---
+    const headers = table.querySelectorAll('thead th[data-column]');
+    const headerArr = Array.from(headers);
+
+    headers.forEach(function (th) {
+        th.addEventListener('click', function () {
+            const column = this.dataset.column;
+            if (!column) return;
+            if (!this.querySelector('.sort-icon')) return;
+
+            const direction = currentSort.column === column && currentSort.direction === 'asc' ? 'desc' : 'asc';
+            currentSort = { column, direction };
+
+            headers.forEach(function (h) {
+                h.classList.remove('sorted');
+                const icon = h.querySelector('.sort-icon');
+                if (icon) icon.className = 'bi bi-chevron-expand sort-icon';
+            });
+            this.classList.add('sorted');
+            const sortIcon = this.querySelector('.sort-icon');
+            if (sortIcon) sortIcon.className = 'bi bi-chevron-' + (direction === 'asc' ? 'up' : 'down') + ' sort-icon';
+
+            const colIndex = headerArr.indexOf(this);
+            allRows.sort(function (a, b) {
+                const aTd = a.children[colIndex];
+                const bTd = b.children[colIndex];
+                const aVal = aTd ? aTd.textContent.trim() : '';
+                const bVal = bTd ? bTd.textContent.trim() : '';
+                const aNum = parseFloat(aVal);
+                const bNum = parseFloat(bVal);
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return direction === 'asc' ? aNum - bNum : bNum - aNum;
+                }
+                return direction === 'asc'
+                    ? aVal.localeCompare(bVal, 'es', { sensitivity: 'base' })
+                    : bVal.localeCompare(aVal, 'es', { sensitivity: 'base' });
+            });
+            render();
+        });
+    });
+
+    // --- API publica para filtros externos ---
+    window._estuPagination = {
+        applyFilter: function (predicateFn) {
+            externalFilter = predicateFn || null;
+            render();
+        }
+    };
+}
+
+const getCol = (name, selector) => {
+    const fila = document.getElementById(selector);
+    const elements = fila.querySelectorAll("th");
+    let foundIndex = -1;
+    for (var i = 0; i < elements.length; i++) {
+        let element = elements[i];
+        const texto = element.textContent.trim();
+        if (texto.includes(name)) {
+            foundIndex = i;
+            break;
+        }
+    }
+    return foundIndex;
+}
+
+document
+    .getElementById("administrarEstudiantes")
+    .addEventListener("click", async (e) => {
+        e.preventDefault(); if (!_svl_animate) return;
+        ffsedes();
+        divContents.forEach((div) => div.classList.add("d-none"));
+        resetAllTables();
+        document
+            .getElementById("controlEstudiantes")
+            .classList.remove("d-none");
+        document.getElementById("navbarNavAltMarkup").classList.remove("show");
+        document.getElementById("navbarNavAltMarkup").click();
+        document.querySelector(".descudo").classList.add("d-none");
+        await getEstugrupos(document.getElementById("yearestugrupos").value);
+    });
+
+
+let FILTRO = '';
+let CELDAFILTRO = '';
+
+document.getElementById("filtrosddEstudiantes").addEventListener("click", e => {
+    e.preventDefault();
+    const a = e.target.closest(".dropdown-item");
+    const { filter } = a.dataset;
+    const tabla = document.getElementById("tablaControlEstudiantes");
+    const filas = Array.from(tabla.getElementsByTagName("tr")).slice(1);
+    const titlefilterestus = document.getElementById("titlefilterestus");
+    titlefilterestus.textContent = 'Filtros';
+    consolelog(filter)
+    if (filter === 'f0') {
+        titlefilterestus.textContent = 'Activo';
+        FILTRO = '✅'; CELDAFILTRO = getCol('Activo', 'adesthead');
+        if (window._estuPagination) window._estuPagination.applyFilter(row => {
+            const td = row.getElementsByTagName('td')[CELDAFILTRO];
+            return td && td.textContent.includes(FILTRO);
+        });
+    } else if (filter === 'f1') {
+        titlefilterestus.textContent = 'Inactivos';
+        FILTRO = '🚷'; CELDAFILTRO = getCol('Activo', 'adesthead');
+        if (window._estuPagination) window._estuPagination.applyFilter(row => {
+            const td = row.getElementsByTagName('td')[CELDAFILTRO];
+            return td && td.textContent.includes(FILTRO);
+        });
+    }
+    else if (filter === 'f3') {
+        titlefilterestus.textContent = 'Banda';
+        FILTRO = '🎶'; CELDAFILTRO = getCol('Banda', 'adesthead');
+        if (window._estuPagination) window._estuPagination.applyFilter(row => {
+            const td = row.getElementsByTagName('td')[CELDAFILTRO];
+            return td && td.textContent.includes(FILTRO);
+        });
+    }
+    else if (filter === 'f4') {
+        titlefilterestus.textContent = 'H.E.D.';
+        FILTRO = '❤️‍🩹'; CELDAFILTRO = getCol('HED', 'adesthead');
+        if (window._estuPagination) window._estuPagination.applyFilter(row => {
+            const td = row.getElementsByTagName('td')[CELDAFILTRO];
+            return td && td.textContent.includes(FILTRO);
+        });
+    }
+    else if (filter === 'fb') {
+        document.getElementById('titlefilterestus').textContent = 'Filtros';
+        document.getElementById('fsedesTitle').textContent = 'Sede';
+        document.getElementById('fgradosTitle').textContent = 'Grados';
+        CELDAFILTRO = ''; FILTRO = '';
+        if (window._estuPagination) window._estuPagination.applyFilter(null);
+    }
+});
+
+
+let NSEDE = '';
+
+
+document.getElementById("filtrosddSedes").addEventListener("click", (e) => {
+    e.preventDefault();
+    const fsedesTitle = document.getElementById("fsedesTitle");
+    fsedesTitle.textContent = 'Sede';
+    const a = e.target.closest(".dropdown-item");
+    consolelog(_SEDES);
+    const { sede, nsede } = a.dataset;
+    if (sede !== 'fb') {
+        NSEDE = nsede;
+        const grados = _SEDES.filter((se) => se.ind === sede)[0].grados.map((se) => {
+            return {
+                ...se,
+                grado: `${se.nivel}-${se.numero}`
+            }
+        });
+        let html = ``;
+        grados.forEach(({ grado }) => {
+            html += ` <li><a class="dropdown-item" data-grado="${grado}" href="#">${grado}</a></li>`;
+        });
+        document.querySelector(".ffgrados").innerHTML = html;
+        fsedesTitle.textContent = nsede;
+        const celdaC = getCol('Sede', 'adesthead');
+        if (window._estuPagination) window._estuPagination.applyFilter(row => {
+            const celdaActivo = row.getElementsByTagName("td")[celdaC];
+            const activo = celdaActivo ? celdaActivo.textContent : '';
+            if (CELDAFILTRO != '') {
+                const celdaValue = row.getElementsByTagName("td")[CELDAFILTRO];
+                const filtro = celdaValue ? celdaValue.textContent : '';
+                return filtro.includes(FILTRO) && activo.includes(nsede);
+            } else
+                return activo.includes(nsede);
+        });
+    }
+    else if (sede === "fb") {
+        NSEDE = '';
+        CELDAFILTRO = '';
+        FILTRO = '';
+
+        document.getElementById("titlefilterestus").textContent = 'Filtros';
+        document.getElementById("fsedesTitle").textContent = 'Sede';
+        document.getElementById("fgradosTitle").textContent = 'Grados';
+        if (window._estuPagination) window._estuPagination.applyFilter(null);
+    }
+});
+
+
+
+document.getElementById("filtrosddGrados").addEventListener("click", (e) => {
+    e.preventDefault();
+    const a = e.target.closest(".dropdown-item");
+    const { grado } = a.dataset;
+    const fgradosTitle = document.getElementById("fgradosTitle");
+    fgradosTitle.textContent = 'Grados';
+    if (grado !== 'fb') {
+        fgradosTitle.textContent = grado;
+        const celdaC = getCol('Sede', 'adesthead');
+        const celdaC2 = getCol('Grado', 'adesthead');
+        if (window._estuPagination) window._estuPagination.applyFilter(row => {
+            const celdaActivo = row.getElementsByTagName("td")[celdaC];
+            const celdaActivo2 = row.getElementsByTagName("td")[celdaC2];
+            const activo = celdaActivo ? celdaActivo.textContent : '';
+            const activo2 = celdaActivo2 ? celdaActivo2.textContent : '';
+            if (CELDAFILTRO != '') {
+                consolelog({ CELDAFILTRO, FILTRO })
+                const celdaValue = row.getElementsByTagName("td")[CELDAFILTRO];
+                const filtro = celdaValue ? celdaValue.textContent : '';
+                return filtro.includes(FILTRO) && activo.includes(NSEDE) && activo2.includes(grado);
+            } else
+                return activo.includes(NSEDE) && activo2.includes(grado);
+        });
+    }
+    else
+        if (grado === "fb") {
+            CELDAFILTRO = '';
+            FILTRO = '';
+            document.getElementById("titlefilterestus").textContent = 'Filtros';
+            document.getElementById("fsedesTitle").textContent = 'Sede';
+            document.getElementById("fgradosTitle").textContent = 'Grados';
+            if (window._estuPagination) window._estuPagination.applyFilter(null);
+        }
+});
+
+
+document.getElementById("yearestugrupos").addEventListener("change", async e => {
+    e.preventDefault();
+    const year = e.target.value;
+    await getEstugrupos(year);
+});
+
+document.getElementById("btnsearchestugrupos").addEventListener("click", async (e) => {
+    e.preventDefault(); if (!_svl_animate) return;
+    const result = await Swal.fire({
+        title: "Qué desea buscar",
+        input: "text",
+        showCancelButton: true,
+        cancelButtonText: "Cancelar",
+    });
+    if (result.isConfirmed) {
+        consolelog(result.value);
+        const searchInput = document.getElementById('searchEstugrupos');
+        if (searchInput) {
+            searchInput.value = result.value;
+            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    }
+});

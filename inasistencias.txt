@@ -1,0 +1,210 @@
+<div id="concentradorInasistencias" class="menuTop mx-2 pt-3">
+        <div class="mx-1 pt-1">
+            <h3>Concentrador Inasistencias</h3>
+            <form id="frmConcentradorInasistencias">
+                <div class="row">
+                    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                        <div class="form-group">
+                            <div class="mb-3">
+                                <label for="asignacionInasistencias" class="form-label">Asignación</label>
+                                <select class="form-select" name="Asignacion" id="asignacionInasistencias" required=""><option></option><option value="1" selected="">IE DE OCCIDENTE</option><option value="2">ANTONIO JOSE DE SUCRE
+</option><option value="3">CELMIRA PIEDRAHITA</option><option value="4">CESAR AGUDELO</option><option value="5">SAN JOSE</option></select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-3 col-md-3 col-lg-1">
+                        <div class="form-group">
+                            <div class="mb-3">
+                                <label for="nivelInasistencias" class="form-label">Nivel
+                                    <span class="spinner-border spinner-border-sm d-none" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </span>
+                                </label>
+                                <select class="form-select" name="nivel" id="nivelInasistencias" required="">
+                                    <option value="">&nbsp;</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                    <option value="11">11</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-3 col-md-2 col-lg-1">
+                        <div class="form-group">
+                            <div class="mb-3">
+                                <label for="numeroInasistencias" class="form-label">Número
+                                    <span class="spinner-border spinner-border-sm d-none" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </span>&nbsp;
+                                </label>
+                                <select class="form-select" name="numero" id="numeroInasistencias" required="">
+                                    <option value="">&nbsp;</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-5 col-lg-2">
+                        <div class="form-group">
+                            <div class="mb-3">
+                                <label for="periodosInasistencias" class="form-label">Periodo</label>
+                                <select class="form-select" name="periodo" id="periodosInasistencias" required=""><option></option><option value="UNO">UNO</option><option value="DOS">DOS</option><option value="TRES" selected="">TRES</option><option value="CUATRO">CUATRO</option><option value="CINCO">CINCO</option><option value="MINIMAS">MINIMAS</option><option value="TODOS">TODOS</option></select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-3 col-md-3 col-lg-1">
+                        <div class="form-group">
+                            <div class="mb-3">
+                                <label for="btn-submit-concinas" class="form-label text-center">Ver</label><br>
+                                <div class="d-grid gap-1">
+                                    <button type="submit" class="btn btn-success" id="btn-submit-concinas">
+                                        <i class="bi bi-card-list"></i>
+                                        <span class="spinner-border spinner-border-sm spnconcinas d-none" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-3 col-md-2 col-lg-1">
+                        <div class="form-group">
+                            <div class="mb-3">
+                                <label for="btn-submit-concinas" class="form-label text-center">Descargar</label><br>
+                                <div class="d-grid gap-1">
+                                    <button class="btn btn-secondary" id="btn-submit-concinasd">
+                                        <i class="bi bi-download"></i>
+                                        <span class="spinner-border spinner-border-sm spnconcinasd d-none" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-3 col-md-2 col-lg-1">
+                        <div class="row">
+                            <div class="col-12">
+
+                                <div class="">
+
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="mostrarRetardos" disabled="">
+                                        <label class="form-check-label fs-6" for="mostrarRetardos">Retardos</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="mostrarExcusas" disabled="">
+                                        <label class="form-check-label fs-6" for="mostrarExcusas">Excusas</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+            </form>
+
+        </div>
+
+        <div class="concentradorInasistencias container-fluid"></div>
+
+
+    </div>
+
+
+document.querySelector("#conci").addEventListener("click", async (e) => {
+    e.preventDefault(); if (!_svl_animate) return;
+    divContents.forEach((div) => div.classList.add("d-none"));
+    resetAllTables();
+    document
+        .getElementById("concentradorInasistencias")
+        .classList.remove("d-none");
+    document.getElementById("navbarNavAltMarkup").classList.remove("show");
+    document.getElementById("controli").classList.remove("show");
+    document.getElementById("navbarNavAltMarkup").click();
+});
+
+
+
+document
+    .querySelector("#frmConcentradorInasistencias")
+    .addEventListener("submit", async (e) => {
+        e.preventDefault(); if (!_svl_animate) return;
+        document.querySelector("#mostrarRetardos").checked = false;
+        document.querySelector("#mostrarExcusas").checked = false;
+        document.querySelector(".bi-card-list").classList.add("d-none");
+        document.querySelector(".spnconcinas").classList.remove("d-none");
+        let data = new FormData(e.target);
+        data = serialize(data);
+        PERIODO = data.periodo;
+        consolelog(data);
+        document.querySelector(".concentradorInasistencias").innerHTML = spnG;
+        let html = await getConcentrador(data, "inasistencia");
+        document.querySelector(".concentradorInasistencias").innerHTML = html;
+        let row0 = document.getElementById("tableconcentradorinasistencia").rows[0];
+
+        for (let i = 1; i < row0.cells.length; i++) {
+            if (row0.cells[i].children[0]) {
+                let textContent = row0.cells[i].children[0].textContent.trim();
+                let asignatura = JSON.stringify({ ...data, asignatura: textContent });
+                row0.cells[i].children[0].innerHTML = `
+               
+            <button class="btn btn-sm btn-inas-est" data-asignatura='${asignatura}'>
+                <i class="cntgraphic2t">${textContent}</i>
+                <div class="spinner-border text-center spngraphic2t d-none"
+                            role="status" style="width: 1.3rem; height: 1.3rem;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+            </button>
+                        
+        `;
+            }
+        }
+        document.querySelector(".bi-card-list").classList.remove("d-none");
+        document.querySelector(".spnconcinas").classList.add("d-none");
+
+        let response = await fetch("getInasistencias.php", {
+            method: "POST",
+            body: JSON.stringify(data),
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+        let inasistencias = await response.json();
+        if (inasistencias.length > 0) {
+            document.getElementById("mostrarRetardos").removeAttribute("disabled");
+            document.getElementById("mostrarExcusas").removeAttribute("disabled");
+        }
+        if (!inasistencias.length)
+            document.getElementById("mostrarExcusas").removeAttribute("disabled");
+        await inasistencias.forEach(async (inasistencia) => {
+            let { estudiante, asignatura, cantidadInasistencias } = inasistencia;
+            try {
+                var idest = `estudiante_${estudiante}_${asignatura}`;
+                document.getElementById(idest).innerHTML = `
+        <a href="#!" data-inasistencia='${JSON.stringify({
+                    ...inasistencia,
+                    periodo: PERIODO,
+                })}' data-retardos='N' data-excusas='N'>
+        <span class="fs-3 cnt">${cantidadInasistencias}</span>
+        <div class="spinner-border spinner-border-sm spninasa d-none" role="status">
+                                <span class="visually-hidden"></span>
+                            </div>
+        </a>
+
+        `;
+            } catch (e) {
+                consolelog(`${e} en id=${idest}`);
+            }
+        });
+    });

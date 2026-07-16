@@ -1,0 +1,169 @@
+# Prompt de Refactorización: Mejora UX/UI del Módulo de Notas
+
+## 📋 Contexto
+
+Tienes un componente JavaScript @notas.js que gestiona el registro de notas académicas. La funcionalidad está completa y funciona correctamente. Tu tarea es refactorizar **SOLO la interfaz gráfica y la experiencia de usuario**, manteniendo intacta toda la lógica de negocio.
+
+---
+
+## 🎯 Objetivo Principal
+
+Transformar la interfaz actual en una experiencia moderna, elegante y profesional aplicando las mejores tendencias de diseño 2024-2025, con especial énfasis en:
+
+- **Glassmorphism** (efectos de vidrio esmerilado)
+- **Micro-interacciones** y animaciones fluidas
+- **Feedback visual** inmediato y claro
+- **Diseño responsive** y accesible
+- **Jerarquía visual** clara
+
+---
+
+## 🎨 Requisitos de Diseño
+
+### 1. Estética General
+
+- **Glassmorphism**: Aplica efectos de backdrop-filter, blur, transparencias sutiles y bordes con gradientes
+- **Paleta de colores**: Mantén el esquema actual (#543391 como primario) pero añade gradientes modernos y tonos complementarios
+- **Tipografía**: Usa una escala tipográfica clara con pesos variados para jerarquía
+- **Espaciado**: Sistema de espaciado consistente (usa múltiplos de 4px o 8px)
+- **Sombras**: Sombras suaves y multicapa para profundidad
+
+### 2. Componentes Específicos a Mejorar
+
+#### A. Tarjetas y Contenedores
+
+```css
+/* Ejemplo de estilo esperado */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 24px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+
+B. Barra de Porcentajes
+Transforma en una barra de progreso segmentada con gradientes
+Añade animación de entrada suave
+Incluye tooltips al hacer hover mostrando detalles
+C. Botones Flotantes
+Efecto de levitación con sombra dinámica
+Animación de pulso sutil cuando están activos
+Iconos con transiciones suaves
+Estados hover/active con feedback visual claro
+D. Tabla de Notas (Tabulator)
+Filas con hover effect (cambio de color suave)
+Celdas editables con indicador visual claro
+Animación al actualizar valores
+Scrollbar personalizada y elegante
+Header con sticky position y efecto glass
+E. Modales
+Animación de entrada: scale + fade + blur
+Overlay con backdrop-filter
+Transiciones suaves en todos los estados
+Botones de cierre con efecto hover
+Contenido con scroll personalizado si es necesario
+F. Selects y Inputs
+Estilo glassmorphism consistente
+Focus states con glow effect
+Transiciones suaves en cambios de estado
+Placeholders elegantes
+3. Animaciones y Transiciones
+
+/* Definir sistema de animaciones */
+:root {
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Animaciones clave */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+4. Estados de Carga
+Spinner personalizado con diseño glass
+Skeleton screens para contenido que carga
+Progress indicators elegantes
+Transiciones suaves entre estados
+5. Feedback Visual
+Éxito: Animación de check + color verde suave
+Error: Shake animation + color rojo suave
+Warning: Pulse animation + color ámbar
+Info: Fade in + color azul suave
+6. Responsive Design
+Mobile-first approach
+Breakpoints: 640px, 768px, 1024px, 1280px
+Tabla con scroll horizontal en móvil
+Modales full-screen en móvil
+Botones flotantes reposicionados en móvil
+7. Accesibilidad
+Contraste WCAG AA mínimo
+Focus indicators visibles
+ARIA labels apropiados
+Navegación por teclado completa
+Screen reader friendly
+⚠️ Restricciones
+✅ PERMITIDO
+Modificar HTML generado en renderUI()
+Modificar estilos CSS en STYLE.textContent
+Añadir nuevas clases CSS
+Modificar selectores y queries DOM
+Añadir animaciones y transiciones
+Mejorar estructura visual
+❌ PROHIBIDO
+Modificar lógica de negocio (cálculos, validaciones, etc.)
+Cambiar endpoints o estructura de datos
+Modificar eventos de negocio (save, load, etc.)
+Alterar funcionalidad de Tabulator (solo estilos)
+Cambiar nombres de variables/funciones existentes
+Modificar lógica de autenticación o permisos
+📦 Entregables
+Código refactorizado completo del componente
+Sistema de diseño documentado (colores, espaciado, tipografía)
+Guía de animaciones con nombres y usos
+Comentarios explicando decisiones de diseño clave
+
+
+💡 Ejemplo de Transformación Esperada
+Antes:
+html
+<div class="glass-card p-4 mb-4">
+  <span class="text-sm font-semibold">Docente</span>
+</div>
+Después:
+html
+<div class="modern-glass-card group hover:scale-[1.02] transition-all duration-300">
+  <div class="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent rounded-3xl"></div>
+  <span class="relative text-sm font-semibold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+    Docente
+  </span>
+</div>
+🎯 Prioridades
+Impacto visual inmediato - Cambios que se noten al instante
+Consistencia - Sistema de diseño coherente en todo el módulo
+Performance - Animaciones optimizadas (usar transform y opacity)
+Mantenibilidad - CSS organizado y reutilizable
+📝 Notas Finales
+Prioriza la experiencia del usuario docente que usará el sistema diariamente
+Piensa en la fatiga visual: usa colores suaves y espaciado generoso
+La interfaz debe sentirse premium y profesional
+Cada interacción debe dar feedback inmediato
+El diseño debe ser atemporal pero moderno
+🚀 Instrucción Final
+Refactoriza el código completo manteniendo TODA la funcionalidad existente pero transformando radicalmente la experiencia visual y de usuario.
