@@ -358,7 +358,7 @@ class DescripcionesModule {
 
     // Create backdrop
     const backdrop = document.createElement('div');
-    backdrop.className = 'desc-modal-backdrop fixed inset-0 z-[1055] bg-black/40 transition-opacity duration-300';
+    backdrop.className = 'scrim fixed inset-0 z-[1055] bg-black/40 transition-opacity duration-300';
     backdrop.style.opacity = '0';
     document.body.appendChild(backdrop);
     void backdrop.offsetHeight;
@@ -798,7 +798,7 @@ class DescripcionesModule {
       <div class="glass-card p-4 mb-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-3">
-            <div class="relative">
+            <div class="relative" role="search">
               <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
               <input type="search" id="filtroDescripciones"
                      class="w-44 sm:w-56 lg:w-72 pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm

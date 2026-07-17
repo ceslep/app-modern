@@ -1,6 +1,7 @@
 import { escapeHtml, $ } from '@utils/dom.js';
 import { alertError, alertWarning } from '@utils/alert.js';
 import { endpoint } from '@config/endpoints.js';
+import { showEmptyState } from '@components/empty-state.js';
 
 const SELECT_STYLE = `w-full px-2 sm:px-3 py-1.5 sm:py-2 pr-6 sm:pr-8 border border-gray-200 rounded-lg sm:rounded-xl text-xs sm:text-sm bg-white appearance-none focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none transition-all bg-[length:12px] sm:bg-[length:14px] bg-[right_8px_center] sm:bg-[right_10px_center] bg-no-repeat`;
 
@@ -443,7 +444,7 @@ class ConcentradorModule {
     `;
 
     const searchHtml = `
-      <div class="conc-search">
+      <div class="conc-search" role="search">
         <i class="bi bi-search"></i>
         <input type="search" id="concStudentFilter" placeholder="Buscar estudiante por nombre o ID..." aria-label="Buscar estudiante" autocomplete="off" />
         <button type="button" class="conc-search-clear" id="concStudentFilterClear" aria-label="Limpiar filtro" title="Limpiar">×</button>
@@ -516,7 +517,7 @@ class ConcentradorModule {
           </tbody>
         </table>
         ${cardsHtml}
-        <p class="conc-empty hidden" id="concNoResults">No se encontraron estudiantes con ese criterio.</p>
+        <div id="concNoResults" class="hidden"></div>
       </div>
     `;
 
@@ -644,6 +645,7 @@ class ConcentradorModule {
     if (empty && wrap) {
       if (q && visible === 0) {
         empty.classList.remove('hidden');
+        showEmptyState(empty, { icon: 'search', title: 'Sin resultados', desc: 'No se encontraron estudiantes con ese criterio.' });
         const thead = wrap.querySelector('thead');
         if (thead) thead.style.display = 'none';
       } else {

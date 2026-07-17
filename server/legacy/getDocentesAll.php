@@ -7,7 +7,7 @@ $mysqli = new mysqli($host, $user, $pass, $database);
 $mysqli->query("SET NAMES utf8");
 $mysqli->set_charset('utf8');
 
-$sql = "Select distinct identificacion,nombres from docentes where activo='S' order by nombres";
+$sql = "Select distinct identificacion,nombres,acceso_total from docentes where activo='S' order by nombres";
 $result = $mysqli->query($sql);
 $datos = [];
 while ($dato = $result->fetch_assoc())

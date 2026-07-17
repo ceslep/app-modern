@@ -10,6 +10,7 @@ const SECTIONS = [
   { id: 'puestos',          label: 'Puestos',           icon: 'bi-trophy',            sectionId: 'seccionPuestos' },
   { id: 'divider1',                                                            divider: true },
   { id: 'inasistencias',    label: 'Inasistencias',     icon: 'bi-person-x', sub: [
+    { id: 'seccionRegistroInasistencias',  label: 'Registrar Inasistencia' },
     { id: 'seccionInasistencias',          label: 'Inasistencias' },
     { id: 'seccionControlInasistencias',   label: 'Control Asistencia' },
     { id: 'seccionObservador',             label: 'Observador' },
@@ -98,6 +99,8 @@ function renderSidebar() {
     return true;
   });
 
+  nav.setAttribute('role', 'navigation');
+  nav.setAttribute('aria-label', 'Menú principal');
   nav.innerHTML = visibleSections.map((s) => {
     if (s.divider) {
       return '<div class="divider-gradient my-2"></div>';
@@ -123,7 +126,7 @@ function renderSidebar() {
       `;
     }
     const badge = s.badge && notificationCount > 0
-      ? `<span class="notification-badge ml-auto text-xs font-semibold bg-gradient-to-r from-red-500 to-red-400 text-white rounded-full px-1.5 py-0.5 min-w-5 text-center shadow-sm">${notificationCount}</span>`
+      ? `<span class="badge ml-auto">${notificationCount}</span>`
       : '';
     return `
       <a href="#" class="sidebar-link ${currentSection === s.id ? 'active' : ''}"
@@ -165,7 +168,7 @@ async function updateNotificationBadge() {
     const res = await notifications.getUnreadCount();
     if (res.success) {
       notificationCount = res.data?.count || 0;
-      const badge = document.querySelector('.sidebar-link[data-section="seccionNotificaciones"] .notification-badge');
+      const badge = document.querySelector('.sidebar-link[data-section="seccionNotificaciones"] .badge');
       if (badge) {
         badge.textContent = notificationCount;
         badge.style.display = notificationCount > 0 ? 'inline' : 'none';

@@ -3,7 +3,7 @@ let backdropCount = 0;
 
 function createBackdrop() {
   const el = document.createElement('div');
-  el.className = 'cm-backdrop fixed inset-0 z-[1055] bg-black/40 transition-opacity duration-300';
+  el.className = 'scrim fixed inset-0 z-[1055] bg-black/40 transition-opacity duration-300';
   el.style.opacity = '0';
   document.body.appendChild(el);
   void el.offsetHeight;
@@ -12,7 +12,7 @@ function createBackdrop() {
 }
 
 function removeBackdrop() {
-  const els = document.querySelectorAll('.cm-backdrop');
+  const els = document.querySelectorAll('.scrim');
   if (els.length === 0) return;
   const last = els[els.length - 1];
   last.style.opacity = '0';
@@ -55,6 +55,8 @@ class CustomModal {
     this.element.style.display = 'flex';
     this.element.style.opacity = '0';
     this.element.classList.add('show');
+    this.element.setAttribute('role', 'dialog');
+    this.element.setAttribute('aria-modal', 'true');
     document.addEventListener('keydown', this._onKeydown);
     lockScroll();
     void this.element.offsetHeight;
@@ -80,6 +82,8 @@ class CustomModal {
       this.element.style.opacity = '';
       this.element.style.transition = '';
       this.element.classList.remove('show');
+      this.element.removeAttribute('role');
+      this.element.removeAttribute('aria-modal');
       this.element.dispatchEvent(new CustomEvent('hidden.bs.modal'));
     }, 300);
   }

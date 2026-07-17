@@ -84,25 +84,21 @@ $notaWhere = $where;
 $notaParams = $params;
 $notaTypes = $types;
 
-$rangoSql = "SELECT
-    SUM(CASE WHEN AVG(n.valoracion) >= 1 AND AVG(n.valoracion) < 3 THEN 1 ELSE 0 END) AS r1,
-    SUM(CASE WHEN AVG(n.valoracion) >= 3 AND AVG(n.valoracion) < 4 THEN 1 ELSE 0 END) AS r2,
-    SUM(CASE WHEN AVG(n.valoracion) >= 4 AND AVG(n.valoracion) < 4.5 THEN 1 ELSE 0 END) AS r3,
-    SUM(CASE WHEN AVG(n.valoracion) >= 4.5 AND AVG(n.valoracion) <= 5 THEN 1 ELSE 0 END) AS r4
+$avgSql = "SELECT AVG(n.valoracion) AS avg_val
 FROM estugrupos eg
 JOIN notas n ON eg.estudiante = n.estudiante AND n.year = COALESCE(NULLIF(?, ''), YEAR(CURDATE()))
 WHERE $notaWhere
 GROUP BY eg.estudiante";
 
 array_unshift($notaParams, $year !== '' ? $year : '');
-array_unshift($notaTypes, 's');
+$notaTypes = 's' . $notaTypes;
 
 $rangoRow = fetchRow($mysqli, "SELECT
-    COALESCE(SUM(r1), 0) AS r1,
-    COALESCE(SUM(r2), 0) AS r2,
-    COALESCE(SUM(r3), 0) AS r3,
-    COALESCE(SUM(r4), 0) AS r4
-FROM ($rangoSql) sub", $notaParams, $notaTypes);
+    COALESCE(SUM(CASE WHEN avg_val >= 1 AND avg_val < 3 THEN 1 ELSE 0 END), 0) AS r1,
+    COALESCE(SUM(CASE WHEN avg_val >= 3 AND avg_val < 4 THEN 1 ELSE 0 END), 0) AS r2,
+    COALESCE(SUM(CASE WHEN avg_val >= 4 AND avg_val < 4.5 THEN 1 ELSE 0 END), 0) AS r3,
+    COALESCE(SUM(CASE WHEN avg_val >= 4.5 AND avg_val <= 5 THEN 1 ELSE 0 END), 0) AS r4
+FROM ($avgSql) sub", $notaParams, $notaTypes);
 
 $porRangoNota = $rangoRow ? [
     'r1' => (int)$rangoRow['r1'],

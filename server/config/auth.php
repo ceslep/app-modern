@@ -9,9 +9,13 @@ session_start();
  */
 function requireAuth(): void
 {
+    $expired = checkSessionTimeout();
     if (empty($_SESSION['user_id'])) {
         http_response_code(401);
-        echo json_encode(['success' => false, 'error' => 'No autenticado. Inicie sesión.']);
+        $msg = $expired
+            ? 'Sesión expirada. Inicie sesión nuevamente.'
+            : 'No autenticado. Inicie sesión.';
+        echo json_encode(['success' => false, 'error' => $msg]);
         exit;
     }
 }

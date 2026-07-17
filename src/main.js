@@ -13,6 +13,9 @@ import { initDevSwitcher, refreshDevSwitcher } from './components/dev-switcher.j
 import { auth } from '@services/auth.js';
 import { api } from '@services/api.js';
 
+// Session observer — detects expired sessions and shows cause
+import './services/sessionObserver.js';
+
 // Filter population (listens for app:authenticated)
 import './modules/filters.js';
 
@@ -20,6 +23,7 @@ import './modules/filters.js';
 import './modules/informes.js';
 import './modules/notas.js';
 import './modules/inasistencias.js';
+import './modules/registroInasistencias.js';
 import './modules/control_asistencia.js';
 import './modules/convivencia.js';
 import './modules/estadisticas.js';

@@ -179,16 +179,19 @@ class ControlAsistenciaModule {
     try {
       const params = { criterio, page, per_page: this.perPage, year, asignacion: sede, nivel, numero };
 
-      const [searchRes, statsRes] = await Promise.all([
+      const [searchRes, statsRes] = await Promise.allSettled([
         api.post('students/control-search', params),
         api.post('students/control-stats', params),
       ]);
 
-      this.students = Array.isArray(searchRes?.data) ? searchRes.data : (Array.isArray(searchRes) ? searchRes : []);
-      this.meta = searchRes?.meta || null;
-      this.stats = statsRes?.data || null;
+      const searchData = searchRes.status === 'fulfilled' ? searchRes.value : null;
+      const statsData = statsRes.status === 'fulfilled' ? statsRes.value : null;
 
-      this.renderStats(statsEl);
+      this.students = Array.isArray(searchData?.data) ? searchData.data : (Array.isArray(searchData) ? searchData : []);
+      this.meta = searchData?.meta || null;
+      this.stats = statsData?.data || null;
+
+      if (statsData) this.renderStats(statsEl);
       this.renderResults(resultsEl);
     } catch (error) {
       if (resultsEl) {
@@ -432,7 +435,7 @@ class ControlAsistenciaModule {
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Buscar</label>
-            <div class="relative">
+            <div class="relative" role="search">
               <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
               <input type="search" id="caCriterio" autocomplete="off"
                      class="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm

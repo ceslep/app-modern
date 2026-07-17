@@ -330,6 +330,7 @@ class LoginModule {
   }
 
   reveal() {
+    window._sessionExpiredDispatched = false;
     const boot = document.getElementById('boot-loader');
     if (boot) boot.remove();
     const loginPage = document.getElementById('login-page');

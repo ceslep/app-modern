@@ -40,6 +40,8 @@ $routeMap = [
 
   // Attendance
   'attendance'              => 'getInasistencias.php',
+  'attendance/batch'        => 'guardarInasistenciasBatch.php',
+  'students/list'           => 'getEstudiantesGrado.php',
   'attendance/detail'       => 'inasistenciasDetallado.php',
   'attendance/group'        => 'getInasistencias.php',
   'attendance/concentration' => 'getConcentradorInasistencias.php',

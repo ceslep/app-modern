@@ -224,7 +224,7 @@ class ExploradorModule {
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-2 flex-wrap min-w-0" id="exploradorBreadcrumbs"></div>
           <div class="flex items-center gap-2">
-            <div class="relative">
+            <div class="relative" role="search">
               <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
               <input type="search" id="exploradorSearch"
                      class="w-40 lg:w-56 pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg text-xs

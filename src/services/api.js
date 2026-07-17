@@ -100,6 +100,12 @@ class ApiService {
       }
 
       if (!response.ok) {
+        if (response.status === 401 && !endpoint.startsWith('auth/session') && !window._sessionExpiredDispatched) {
+          window._sessionExpiredDispatched = true;
+          window.dispatchEvent(new CustomEvent('auth:session-expired', {
+            detail: { message: data?.error || 'Sesión expirada. Inicie sesión nuevamente.' }
+          }));
+        }
         throw new ApiError(
           data?.error || `Error del servidor (${response.status})`,
           response.status,
@@ -160,6 +166,12 @@ class ApiService {
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
+      if (response.status === 401 && !endpoint.startsWith('auth/session') && !window._sessionExpiredDispatched) {
+        window._sessionExpiredDispatched = true;
+        window.dispatchEvent(new CustomEvent('auth:session-expired', {
+          detail: { message: data?.error || 'Sesión expirada. Inicie sesión nuevamente.' }
+        }));
+      }
       throw new ApiError(data?.error || 'Error al subir archivo', response.status, data);
     }
 

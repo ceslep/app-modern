@@ -27,13 +27,18 @@ export function initNavbar() {
   startTimer();
 
   delegate(document, 'click', '#sidebarToggle', () => {
+    const toggle = document.getElementById('sidebarToggle');
     if (window.innerWidth >= 1024) {
       const layout = document.getElementById('app-layout');
       if (layout) layout.classList.toggle('sidebar-collapsed');
+      const collapsed = layout?.classList.contains('sidebar-collapsed');
+      if (toggle) toggle.setAttribute('aria-expanded', String(!collapsed));
     } else {
       const sidebar = document.getElementById('sidebar');
       if (!sidebar) return;
+      const wasHidden = sidebar.classList.contains('-translate-x-full');
       sidebar.classList.toggle('-translate-x-full');
+      if (toggle) toggle.setAttribute('aria-expanded', String(wasHidden));
       let backdrop = document.getElementById('sidebar-backdrop');
       if (!sidebar.classList.contains('-translate-x-full')) {
         if (!backdrop) {
@@ -43,6 +48,7 @@ export function initNavbar() {
           backdrop.addEventListener('click', () => {
             sidebar.classList.add('-translate-x-full');
             backdrop.remove();
+            if (toggle) toggle.setAttribute('aria-expanded', 'false');
           });
           document.body.appendChild(backdrop);
         }
@@ -75,6 +81,8 @@ function renderNavbar() {
       <div class="flex items-center gap-3">
         <button id="sidebarToggle"
                 class="p-2 -ml-2 rounded-xl text-gray-500 hover:bg-gray-100 transition-colors"
+                aria-expanded="true"
+                aria-controls="sidebar"
                 title="Mostrar/Ocultar menú lateral">
           <i class="bi bi-list text-xl"></i>
         </button>

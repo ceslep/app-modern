@@ -657,7 +657,7 @@ select.custom-select-sm { padding: 0.25rem 0.5rem; font-size: 0.8rem; border-rad
   box-shadow: var(--shadow-lg), var(--inset-hi);
 }
 .modal-header { border-bottom: 1px solid var(--hairline); }
-.cm-backdrop { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.scrim { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 
 /* SweetAlert2 frosted popup */
 .swal2-popup {
@@ -701,6 +701,83 @@ select.custom-select-sm { padding: 0.25rem 0.5rem; font-size: 0.8rem; border-rad
 .tag-red     { background: rgba(239, 68, 68, 0.12);  color: #dc2626; border-color: rgba(239, 68, 68, 0.18); }
 .tag-sky     { background: rgba(14, 165, 233, 0.12); color: #0891b2; border-color: rgba(14, 165, 233, 0.18); }
 .tag-gray    { background: rgba(107, 114, 128, 0.12);color: #6b7280; border-color: rgba(107, 114, 128, 0.18); }
+
+/* Badge — compact count/status indicator (notification counts) */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.375rem;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  background: linear-gradient(135deg, #ef4444, #f87171);
+  box-shadow: 0 1px 4px -1px rgba(239, 68, 68, 0.4);
+}
+
+/* Chip — interactive removable token (filters, selections) */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border: 1px solid rgba(84, 51, 145, 0.18);
+  background: rgba(84, 51, 145, 0.1);
+  color: #543391;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  cursor: default;
+  max-width: 15rem;
+  transition: all 0.15s ease;
+}
+.chip:hover { background: rgba(84, 51, 145, 0.16); }
+.chip .chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  line-height: 1;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+.chip .chip-remove:hover { opacity: 1; }
+
+/* Pill — role/status label with optional dot */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid transparent;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.pill::before {
+  content: '';
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 9999px;
+  background: currentColor;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
 
 /* ============================================================= */
 /*  TABULATOR — frosted glass tables                            */

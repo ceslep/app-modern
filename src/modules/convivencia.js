@@ -327,7 +327,34 @@ class ConvivenciaModule {
   render() {
     const container = $(CONTAINER_ID);
     if (!container) return;
+
+    const savedEstudiantes = [...(this.record.estudiantes || [])];
+    const savedFilterStudents = [...(this._filterStudents || [])];
+    const savedFilterSede = this._savedFilterSede;
+    const savedFilterNivel = this._savedFilterNivel;
+    const savedFilterNumero = this._savedFilterNumero;
+
     container.innerHTML = this.renderHTML();
+
+    if (this.record.estudiantes == null) {
+      this.record.estudiantes = savedEstudiantes;
+    }
+    if (this._filterStudents == null) {
+      this._filterStudents = savedFilterStudents;
+    }
+
+    if (savedFilterSede) {
+      const el = document.getElementById('obsFilterSede');
+      if (el) el.value = savedFilterSede;
+    }
+    if (savedFilterNivel) {
+      const el = document.getElementById('obsFilterNivel');
+      if (el) el.value = savedFilterNivel;
+    }
+    if (savedFilterNumero) {
+      const el = document.getElementById('obsFilterNumero');
+      if (el) el.value = savedFilterNumero;
+    }
   }
 
   renderHTML() {
@@ -1271,6 +1298,7 @@ class ConvivenciaModule {
     }
 
     sedeSel.addEventListener('change', async () => {
+      this._savedFilterSede = sedeSel.value;
       if (!sedeSel.value) { nivelSel.innerHTML = '<option value="">Nivel</option>'; numeroSel.innerHTML = '<option value="">Grupo</option>'; return; }
       nivelSel.innerHTML = '<option value="">Cargando...</option>';
       try {
@@ -1284,6 +1312,7 @@ class ConvivenciaModule {
     });
 
     nivelSel.addEventListener('change', async () => {
+      this._savedFilterNivel = nivelSel.value;
       if (!sedeSel.value || !nivelSel.value) { numeroSel.innerHTML = '<option value="">Grupo</option>'; return; }
       numeroSel.innerHTML = '<option value="">Cargando...</option>';
       try {
@@ -1299,6 +1328,10 @@ class ConvivenciaModule {
         numeroSel.innerHTML = '<option value="">Todos los grupos</option>'
           + unicos.map((n) => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
       } catch { numeroSel.innerHTML = '<option value="">Error</option>'; }
+    });
+
+    numeroSel.addEventListener('change', () => {
+      this._savedFilterNumero = numeroSel.value;
     });
   }
 

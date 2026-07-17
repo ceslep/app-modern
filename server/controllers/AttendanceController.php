@@ -90,6 +90,94 @@ class AttendanceController
     }
 
     /**
+     * POST /attendance/batch - Multiple attendance records
+     */
+    public function batch(): void
+    {
+        $data = getJsonInput();
+        validateRequired($data, ['fecha', 'materias']);
+
+        $docente = $data->docente_id ?? getCurrentUserId();
+        $year = date('Y');
+
+        // Detect current period
+        $periodo = '1';
+        $stmtPer = $this->db->prepare(
+            "SELECT nombre FROM periodos
+             WHERE CURDATE() BETWEEN fechainicial AND fechafinal
+             ORDER BY ind LIMIT 1"
+        );
+        $stmtPer->execute();
+        $row = $stmtPer->fetch();
+        if ($row) {
+            $periodo = $row['nombre'];
+        } else {
+            // Fallback: use first period of current year
+            $stmtPer = $this->db->prepare(
+                "SELECT nombre FROM periodos
+                 WHERE YEAR(fechainicial) = ? OR YEAR(fechafinal) = ?
+                 ORDER BY ind LIMIT 1"
+            );
+            $stmtPer->execute([$year, $year]);
+            $row = $stmtPer->fetch();
+            if ($row) $periodo = $row['nombre'];
+        }
+
+        $materias = $data->materias;
+        if (!is_array($materias) || count($materias) === 0) {
+            error('Debe enviar al menos una materia con registros');
+        }
+
+        $this->db->beginTransaction();
+        $inserted = 0;
+
+        try {
+            $stmt = $this->db->prepare("
+                INSERT INTO inasistencia
+                    (estudiante, nivel, numero, asignacion, materia, periodo,
+                     fecha, horas, excusa, docente, hora_clase, convivencia, detalle, year)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', '', ?, ?)
+            ");
+
+            foreach ($materias as $m) {
+                if (empty($m->registros) || !is_array($m->registros)) continue;
+
+                $nivel = $m->nivel ?? 0;
+                $numero = $m->numero ?? 0;
+                $asignacion = $m->asignacion ?? 0;
+                $materia = $m->materia ?? '';
+                $horasDefault = $m->horas ?? '1';
+
+                foreach ($m->registros as $r) {
+                    $horas = $r->horas ?? $horasDefault;
+                    $stmt->execute([
+                        $r->estudiante_id,
+                        $nivel,
+                        $numero,
+                        $asignacion,
+                        $materia,
+                        $periodo,
+                        $data->fecha,
+                        $horas,
+                        $r->motivo ?? '',
+                        $docente,
+                        $r->observaciones ?? '',
+                        $year,
+                    ]);
+                    $inserted++;
+                }
+            }
+
+            $this->db->commit();
+            success(['count' => $inserted], "$inserted inasistencia(s) registrada(s)");
+
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            error('Error al registrar inasistencias: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * DELETE /attendance/:id
      */
     public function delete(string $id): void

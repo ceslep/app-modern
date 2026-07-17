@@ -27,8 +27,10 @@ export class IconSelect {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'icon-select-btn';
+    btn.setAttribute('role', 'combobox');
     btn.setAttribute('aria-haspopup', 'listbox');
     btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-controls', `list-${this.id}`);
     btn.setAttribute('aria-labelledby', this.id);
     btn.innerHTML = `<span class="icon-select-placeholder">${escapeHtml(options.placeholder)}</span>
       <i class="bi bi-chevron-down icon-select-arrow"></i>`;

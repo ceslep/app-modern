@@ -242,19 +242,19 @@ class ControlEstudiantesModule {
 
         <!-- Step rail -->
         <nav class="estu-rail" role="tablist" aria-label="Secciones del formulario">
-          <button type="button" class="tab-btn estu-step" data-tab="datose" data-active="true" role="tab">
+          <button type="button" class="tab-btn estu-step" data-tab="datose" data-active="true" role="tab" aria-selected="true" aria-controls="tab-datose">
             <span class="estu-step-ic"><i class="bi bi-person-vcard"></i></span>
             <span class="estu-step-tx"><span class="estu-step-t">Estudiante</span><span class="estu-step-s">Datos personales</span></span>
           </button>
-          <button type="button" class="tab-btn estu-step" data-tab="datosacademicos" role="tab">
+          <button type="button" class="tab-btn estu-step" data-tab="datosacademicos" role="tab" aria-selected="false" aria-controls="tab-datosacademicos">
             <span class="estu-step-ic"><i class="bi bi-mortarboard"></i></span>
             <span class="estu-step-tx"><span class="estu-step-t">Académica</span><span class="estu-step-s">Grupo y estado</span></span>
           </button>
-          <button type="button" class="tab-btn estu-step" data-tab="datospadres" role="tab">
+          <button type="button" class="tab-btn estu-step" data-tab="datospadres" role="tab" aria-selected="false" aria-controls="tab-datospadres">
             <span class="estu-step-ic"><i class="bi bi-people"></i></span>
             <span class="estu-step-tx"><span class="estu-step-t">Familia</span><span class="estu-step-s">Padres y acudiente</span></span>
           </button>
-          <button type="button" class="tab-btn estu-step" data-tab="referencial" role="tab">
+          <button type="button" class="tab-btn estu-step" data-tab="referencial" role="tab" aria-selected="false" aria-controls="tab-referencial">
             <span class="estu-step-ic"><i class="bi bi-clipboard-data"></i></span>
             <span class="estu-step-tx"><span class="estu-step-t">Referencial</span><span class="estu-step-s">Datos sociales</span></span>
           </button>
@@ -800,7 +800,7 @@ class ControlEstudiantesModule {
 
       <!-- ── Search bar ── -->
       <div class="glass-card p-3 mb-4">
-        <div class="relative">
+        <div class="relative" role="search">
           <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
           <input type="text" id="searchControlEstu" placeholder="Buscar estudiantes por nombre, código, sede..."
                  class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none transition-all bg-white">
@@ -1211,7 +1211,9 @@ class ControlEstudiantesModule {
   /** Cambia la pestaña activa del formulario de estudiante. */
   _switchTab(tab) {
     document.querySelectorAll('#modalEstugrupos .tab-btn').forEach(btn => {
-      btn.setAttribute('data-active', btn.dataset.tab === tab ? 'true' : 'false');
+      const isActive = btn.dataset.tab === tab;
+      btn.setAttribute('data-active', isActive ? 'true' : 'false');
+      btn.setAttribute('aria-selected', String(isActive));
     });
     document.querySelectorAll('#modalEstugrupos .tab-pane').forEach(p => {
       p.classList.toggle('hidden', p.id !== `tab-${tab}`);
@@ -1570,6 +1572,24 @@ class ControlEstudiantesModule {
       this._switchTab(tabBtn.dataset.tab);
       const content = document.querySelector('#modalEstugrupos .estu-content');
       if (content) content.scrollTop = 0;
+    });
+
+    document.addEventListener('keydown', (e) => {
+      const tabBtn = e.target.closest('#modalEstugrupos .tab-btn');
+      if (!tabBtn || !tabBtn.dataset.tab) return;
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      const tabs = Array.from(document.querySelectorAll('#modalEstugrupos .tab-btn'));
+      const idx = tabs.indexOf(tabBtn);
+      let next;
+      if (e.key === 'ArrowRight') next = tabs[(idx + 1) % tabs.length];
+      else next = tabs[(idx - 1 + tabs.length) % tabs.length];
+      if (next) {
+        this._switchTab(next.dataset.tab);
+        next.focus();
+        const content = document.querySelector('#modalEstugrupos .estu-content');
+        if (content) content.scrollTop = 0;
+      }
     });
 
     // ── Change group confirm checkbox ──
