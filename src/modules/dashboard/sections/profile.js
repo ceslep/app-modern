@@ -7,6 +7,7 @@
  */
 
 import { escapeHtml } from '@utils/dom.js';
+import { devTag } from '@utils/devLabel.js';
 import { getRoleDescriptor } from '../greeting.js';
 
 export function renderProfile(user) {
@@ -22,7 +23,7 @@ export function renderProfile(user) {
 
   card.innerHTML = `
     <h2 class="db-section-title" style="margin-bottom:0.85rem">
-      <i class="bi bi-person-badge" aria-hidden="true"></i> Perfil del docente
+      <img src="https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-gahIe45OSBuvqPogVpr3KaBJF0zCSL.png" alt="" width="16" height="16" style="width:16px;height:16px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15))" loading="lazy" aria-hidden="true"> Perfil del docente
     </h2>
     <div class="db-profile">
       <div class="db-profile-head">
@@ -41,7 +42,7 @@ export function renderProfile(user) {
         <span class="key">Identificación</span>
         <span class="val" data-row-val>${escapeHtml(ident)}</span>
         <button type="button" class="copy" data-copy-btn aria-label="Copiar identificación">
-          <i class="bi bi-clipboard" aria-hidden="true"></i>
+          <img src="https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-yFtjfKzQBiN4N3in0hmfzJN0a4u71g.png" alt="" width="16" height="16" style="width:16px;height:16px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15))" loading="lazy" aria-hidden="true">
         </button>
       </div>
 
@@ -49,7 +50,7 @@ export function renderProfile(user) {
         <span class="key">Correo</span>
         <span class="val" data-row-val>${escapeHtml(email)}</span>
         <button type="button" class="copy" data-copy-btn aria-label="Copiar correo">
-          <i class="bi bi-clipboard" aria-hidden="true"></i>
+          <img src="https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-yFtjfKzQBiN4N3in0hmfzJN0a4u71g.png" alt="" width="16" height="16" style="width:16px;height:16px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15))" loading="lazy" aria-hidden="true">
         </button>
       </div>
 
@@ -60,6 +61,7 @@ export function renderProfile(user) {
     </div>
   `;
 
+  devTag(card, 'dashboard/sections/profile.js');
   return card;
 }
 

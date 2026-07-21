@@ -19,7 +19,6 @@ import { escapeHtml, $, delegate, debounce } from '@utils/dom.js';
 const CONS_RESULTADOS = 'consResultados';
 const CONS_HERRAMIENTAS = 'consHerramientas';
 const CONS_DESCARGAR = 'consDescargar';
-const CONS_WRAPPER = 'consWidgetWrapper';
 
 class ConsultasModule {
   constructor() {
@@ -42,28 +41,11 @@ class ConsultasModule {
     if (this.activated) return;
     // ── Access control: only Maestra users ──
     if (!auth.isMaestra()) {
-      // Hide the Consultas widget inside Informes section
-      const wrapper = $(CONS_WRAPPER);
-      if (wrapper) wrapper.classList.add('hidden');
+      const btn = $('btnAbrirModalConsultas');
+      if (btn) btn.classList.add('hidden');
       return;
     }
     this.activated = true;
-
-    // Update the badge to confirm the user is allowed
-    const badge = $('consBadgeMaestra');
-    if (badge) {
-      badge.classList.remove('bg-[#543391]/10', 'text-[#543391]', 'border-[#543391]/20');
-      badge.classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-200');
-      const icon = badge.querySelector('i');
-      if (icon) {
-        icon.classList.remove('bi-shield-lock', 'text-[#543391]');
-        icon.classList.add('bi-shield-check', 'text-emerald-600');
-      }
-      // Replace text node content (preserves the <i> icon child)
-      Array.from(badge.childNodes)
-        .filter((n) => n.nodeType === Node.TEXT_NODE)
-        .forEach((n) => { n.textContent = ' Acceso Maestra'; });
-    }
 
     // Open modal button
     const btnOpen = $('btnAbrirModalConsultas');

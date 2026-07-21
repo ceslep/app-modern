@@ -6,6 +6,7 @@
  */
 
 import { escapeHtml } from '@utils/dom.js';
+import { devTag } from '@utils/devLabel.js';
 import dayjs from 'dayjs';
 import 'dayjs/locale/es';
 import relativeTime from 'dayjs/plugin/relativeTime.js';
@@ -23,16 +24,17 @@ export function renderActivity() {
 
   card.innerHTML = `
     <h2 class="db-section-title" style="margin-bottom:0.85rem">
-      <i class="bi bi-activity" aria-hidden="true"></i> Actividad reciente
+      <img src="https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-73pNGHJBFF75t0zRsAgQInW9DAM4vd.png" alt="" width="16" height="16" style="width:16px;height:16px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15))" loading="lazy" aria-hidden="true"> Actividad reciente
     </h2>
     <div class="db-activity" data-activity-list>
       <div class="db-empty">
-        <i class="bi bi-hourglass-split" aria-hidden="true"></i>
+        <img src="https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-jZvuQMZCi8XuT0afzKwdnQXwS7maTf.png" alt="" width="24" height="24" style="width:24px;height:24px;object-fit:contain;display:block;margin:0 auto 0.25rem;opacity:0.4" loading="lazy" aria-hidden="true">
         Cargando actividad…
       </div>
     </div>
   `;
 
+  devTag(card, 'dashboard/sections/activity.js');
   return card;
 }
 
@@ -49,7 +51,7 @@ export function hydrateActivity(rootEl, notifications = []) {
   if (items.length === 0) {
     list.innerHTML = `
       <div class="db-empty">
-        <i class="bi bi-bell-slash" aria-hidden="true"></i>
+        <img src="https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-CK4odMSKWdmIj0ueBtNq9HOZR6Fbgv.png" alt="" width="24" height="24" style="width:24px;height:24px;object-fit:contain;display:block;margin:0 auto 0.25rem;opacity:0.4" loading="lazy" aria-hidden="true">
         Sin actividad reciente
       </div>
     `;

@@ -62,9 +62,25 @@ class EstudiantesService {
     return api.post('students/update', payload);
   }
 
+  /**
+   * Crea un nuevo estudiante.
+   * `data` debe incluir al menos: codigo, estudiante, nombres, asignacion, nivel, numero, year.
+   */
+  async create(data) {
+    const payload = {};
+    for (const [k, v] of Object.entries(data)) {
+      if (ESTUGRUPOS_COLUMNS.has(k) || ['codigo','estudiante','asignacion','nivel','numero','year','anio'].includes(k)) {
+        payload[k] = v;
+      }
+    }
+    return api.post('students/create', payload);
+  }
+
   /** Cambia a un estudiante de grupo (cambia_grado.php). */
-  async changeGroup({ estudiante, asignacion, nivel, numero, grado }) {
-    return api.post('students/change-group', { estudiante, asignacion, nivel, numero, grado });
+  async changeGroup({ estudiante, asignacion, nivel, numero, grado, year }) {
+    const payload = { estudiante, asignacion, nivel, numero, grado };
+    if (year) payload.year = year;
+    return api.post('students/change-group', payload);
   }
 }
 

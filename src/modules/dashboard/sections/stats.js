@@ -9,13 +9,14 @@
  */
 
 import { escapeHtml } from '@utils/dom.js';
+import { devTag } from '@utils/devLabel.js';
 import { animateCount } from '../counter.js';
 
 const DEFAULT_STATS = [
   {
     id: 'estudiantes',
     label: 'Estudiantes a cargo',
-    icon: 'bi-people-fill',
+    icon: 'https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-WaLIdwjgmqnfE0GndCGu1R9ReZOal5.png',
     iconClass: 'icon-primary',
     badge: { text: 'Hoy', variant: 'live' },
     trend: null,
@@ -23,23 +24,39 @@ const DEFAULT_STATS = [
   {
     id: 'asignaturas',
     label: 'Asignaturas',
-    icon: 'bi-journal-bookmark-fill',
+    icon: 'https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-V5g1BA4Fg3Mgks7vN6n3eaXb8KBz0g.png',
     iconClass: 'icon-emerald',
     badge: null,
     trend: null,
   },
   {
-    id: 'informes',
-    label: 'Informes y Consultas',
-    icon: 'bi-file-earmark-bar-graph-fill',
+    id: 'inasistencias',
+    label: 'Inasistencias',
+    icon: 'https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-ij7GEZhfmzLNlLgDJVhkST8FIm5rJV.png',
+    iconClass: 'icon-sky',
+    badge: null,
+    trend: null,
+  },
+  {
+    id: 'convivencia',
+    label: 'Convivencia',
+    icon: 'https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-h0hzCqnJZkRGDg1z3YSvUnJV77Ck6f.png',
     iconClass: 'icon-amber',
     badge: null,
     trend: null,
   },
   {
+    id: 'descripciones',
+    label: 'Descripciones',
+    icon: 'https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-73pNGHJBFF75t0zRsAgQInW9DAM4vd.png',
+    iconClass: 'icon-sky',
+    badge: { text: 'Período actual', variant: 'live' },
+    trend: null,
+  },
+  {
     id: 'notificaciones',
     label: 'Notificaciones',
-    icon: 'bi-bell-fill',
+    icon: 'https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-CK4odMSKWdmIj0ueBtNq9HOZR6Fbgv.png',
     iconClass: 'icon-red',
     badge: { text: 'En vivo', variant: 'live' },
     trend: null,
@@ -54,6 +71,7 @@ export function renderStats(stats = DEFAULT_STATS) {
     .map((s, i) => renderCard(s, i))
     .join('');
 
+  devTag(wrap, 'dashboard/sections/stats.js');
   return wrap;
 }
 
@@ -79,7 +97,10 @@ function renderCard(s, index) {
     <article class="db-stat" data-stat-id="${escapeHtml(s.id)}" style="animation-delay:${0.1 + index * 0.06}s">
       <div class="db-stat-head">
         <div class="db-stat-icon ${escapeHtml(s.iconClass)}">
-          <i class="bi ${escapeHtml(s.icon)}" aria-hidden="true"></i>
+          ${s.icon && s.icon.startsWith('http')
+            ? `<img src="${escapeHtml(s.icon)}" alt="" width="24" height="24" style="width:24px;height:24px;object-fit:contain;" loading="lazy">`
+            : `<i class="bi ${escapeHtml(s.icon)}" aria-hidden="true"></i>`
+          }
         </div>
         ${badgeHtml}
       </div>

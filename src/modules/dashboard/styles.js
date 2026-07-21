@@ -339,15 +339,10 @@ const CSS = `
   outline: 3px solid var(--db-brand-glow);
   outline-offset: 3px;
 }
-.dashboard-module .db-action i.lead {
-  font-size: 1.5rem;
-  background: linear-gradient(135deg, var(--c-from), var(--c-to));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+.dashboard-module .db-action .lead {
   transition: transform var(--db-spring);
 }
-.dashboard-module .db-action:hover i.lead { transform: scale(1.12) rotate(-4deg); }
+.dashboard-module .db-action:hover .lead { transform: scale(1.12) rotate(-4deg); }
 .dashboard-module .db-action span.lbl {
   font-size: 0.78rem; font-weight: 600; color: var(--db-ink); letter-spacing: 0.005em;
 }
@@ -442,6 +437,7 @@ const CSS = `
   font-size: 0.85rem; font-weight: 500;
 }
 .dashboard-module .db-empty i { font-size: 1.5rem; display: block; margin-bottom: 0.4rem; opacity: 0.4; }
+.dashboard-module .db-empty img { display: block; margin-bottom: 0.4rem; }
 
 /* ---- Section heading ---- */
 .dashboard-module .db-section-title {

@@ -4,6 +4,7 @@
  */
 
 import { escapeHtml } from '@utils/dom.js';
+import { devTag } from '@utils/devLabel.js';
 import { getGreetingForHour, getLongDateEs, getRoleDescriptor } from '../greeting.js';
 
 export function renderGreeting(user) {
@@ -28,9 +29,10 @@ export function renderGreeting(user) {
       <span class="dot"></span>
       <span>${escapeHtml(dateStr)}</span>
       <span class="dot"></span>
-      <span><i class="bi bi-grid-1x2-fill" style="opacity:0.5" aria-hidden="true"></i> Panel de control</span>
+      <span><img src="https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-Qep2rmAXunWu8R2o1FCgLLDrtiD1q2.png" alt="" width="16" height="16" style="width:16px;height:16px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15));opacity:0.5;vertical-align:middle" loading="lazy"> Panel de control</span>
     </div>
   `;
 
+  devTag(section, 'dashboard/sections/greeting.js');
   return section;
 }

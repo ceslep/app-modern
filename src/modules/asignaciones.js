@@ -95,6 +95,7 @@ class AsignacionesModule {
   setupUI() {
     const container = $('seccionAsignaciones');
     if (!container) return;
+    this._injectStyles();
 
     container.innerHTML = `
       <div class="flex items-center justify-between mb-6">
@@ -107,68 +108,63 @@ class AsignacionesModule {
         </span>
       </div>
 
-      <!-- ── Filters ── -->
-      <div class="glass-card p-4 mb-4">
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
+      <div class="asig-filter-card">
+        <div class="asig-filter-grid">
           <div>
-            <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Año</label>
-            <select id="filtroAsigYear" class="w-full px-2 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none"></select>
+            <label class="asig-filter-label">Año</label>
+            <select id="filtroAsigYear" class="asig-filter-select"></select>
           </div>
           <div>
-            <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Sede</label>
-            <select id="filtroAsigSede" class="w-full px-2 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none">
+            <label class="asig-filter-label">Sede</label>
+            <select id="filtroAsigSede" class="asig-filter-select">
               <option value="">Todas</option>
             </select>
           </div>
           <div>
-            <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Nivel</label>
-            <select id="filtroAsigNivel" class="w-full px-2 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none">
+            <label class="asig-filter-label">Nivel</label>
+            <select id="filtroAsigNivel" class="asig-filter-select">
               <option value="">Todos</option>
               ${Array.from({length: 12}, (_, i) => `<option value="${i}">${i}</option>`).join('')}
             </select>
           </div>
           <div>
-            <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Número</label>
-            <select id="filtroAsigNumero" class="w-full px-2 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none">
+            <label class="asig-filter-label">Número</label>
+            <select id="filtroAsigNumero" class="asig-filter-select">
               <option value="">Todos</option>
               ${Array.from({length: 5}, (_, i) => `<option value="${i}">${i}</option>`).join('')}
             </select>
           </div>
           <div>
-            <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Asignatura</label>
-            <input type="text" id="filtroAsigAsignatura" placeholder="Buscar..." class="w-full px-2 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none">
+            <label class="asig-filter-label">Asignatura</label>
+            <input type="text" id="filtroAsigAsignatura" placeholder="Buscar..." class="asig-filter-input">
           </div>
           <div>
-            <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Visible</label>
-            <select id="filtroAsigVisible" class="w-full px-2 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none">
+            <label class="asig-filter-label">Visible</label>
+            <select id="filtroAsigVisible" class="asig-filter-select">
               <option value="">Todos</option>
               <option value="S">Sí</option>
               <option value="N">No</option>
             </select>
           </div>
-          <div class="flex items-end gap-1">
-            <button id="btnFiltrarAsig" class="flex-1 px-3 py-2 bg-[#543391] hover:bg-[#6f4ab3] text-white font-medium rounded-lg transition-all text-sm flex items-center justify-center gap-1">
+          <div class="asig-filter-actions">
+            <button id="btnFiltrarAsig" class="asig-btn-primary">
               <i class="bi bi-funnel"></i> Filtrar
             </button>
-            <button id="btnLimpiarAsig" class="px-3 py-2 border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg transition-all text-sm" title="Limpiar filtros">
+            <button id="btnLimpiarAsig" class="asig-btn-clear" title="Limpiar filtros">
               <i class="bi bi-x-circle"></i>
             </button>
           </div>
         </div>
       </div>
 
-      <!-- ── Toolbar ── -->
-      <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
-        <div class="flex items-center gap-2">
-          <span class="text-sm text-gray-500" id="asigTotalCount">0 registros</span>
-        </div>
-        <button id="btnNuevaAsignacion" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-all text-sm">
+      <div class="asig-toolbar">
+        <span class="asig-count" id="asigTotalCount">0 registros</span>
+        <button id="btnNuevaAsignacion" class="asig-btn-add">
           <i class="bi bi-plus-lg"></i> Nueva Asignación
         </button>
       </div>
 
-      <!-- ── Table ── -->
-      <div id="tablaAsignaciones" class="tabulator-glass-wrap"></div>
+      <div id="tablaAsignaciones" class="asig-table-wrap"></div>
     `;
   }
 
@@ -260,8 +256,16 @@ class AsignacionesModule {
   }
 
   clearFilters() {
-    const selects = ['filtroAsigYear', 'filtroAsigSede', 'filtroAsigNivel', 'filtroAsigNumero', 'filtroAsigVisible'];
-    selects.forEach(id => {
+    const yearSel = $('filtroAsigYear');
+    if (yearSel) {
+      const cur = new Date().getFullYear();
+      for (let i = 0; i < yearSel.options.length; i++) {
+        if (Number(yearSel.options[i].value) === cur) {
+          yearSel.selectedIndex = i; break;
+        }
+      }
+    }
+    ['filtroAsigSede', 'filtroAsigNivel', 'filtroAsigNumero', 'filtroAsigVisible'].forEach(id => {
       const el = $(id);
       if (el) el.selectedIndex = 0;
     });
@@ -309,36 +313,46 @@ class AsignacionesModule {
       {
         title: 'Sede',
         field: 'sede_nombre',
-        width: 100,
-        formatter: (cell) => escapeHtml(cell.getValue() || `Sede ${cell.getData().sede}`),
+        width: 110,
+        formatter: (cell) => {
+          const v = cell.getValue();
+          return v ? `<span class="asig-cell-sede">${escapeHtml(v)}</span>`
+            : `<span class="asig-cell-na">Sede ${cell.getData().sede}</span>`;
+        },
       },
       {
         title: 'Nivel',
         field: 'nivel',
-        width: 60,
+        width: 55,
         hozAlign: 'center',
+        formatter: (cell) => `<span class="asig-cell-badge">${cell.getValue()}</span>`,
       },
       {
         title: 'No.',
         field: 'numero',
-        width: 50,
+        width: 45,
         hozAlign: 'center',
+        formatter: (cell) => `<span class="asig-cell-badge">${cell.getValue()}</span>`,
       },
       {
         title: 'Asignatura',
         field: 'asignatura',
         width: 160,
-        headerFilter: false,
       },
       {
         title: 'Materia',
         field: 'materia',
-        width: 100,
+        width: 90,
+        formatter: (cell) => cell.getValue()
+          ? escapeHtml(cell.getValue()) : '<span class="asig-cell-na">—</span>',
       },
       {
         title: 'Abrev.',
         field: 'abreviatura',
-        width: 80,
+        width: 70,
+        formatter: (cell) => cell.getValue()
+          ? `<span class="asig-cell-abrev">${escapeHtml(cell.getValue())}</span>`
+          : '<span class="asig-cell-na">—</span>',
       },
       {
         title: 'Docente',
@@ -346,47 +360,47 @@ class AsignacionesModule {
         width: 180,
         formatter: (cell) => {
           const name = cell.getValue();
-          return name ? escapeHtml(name) : `<span class="text-gray-400">Sin asignar</span>`;
+          return name ? escapeHtml(name) : '<span class="asig-cell-na">Sin asignar</span>';
         },
       },
       {
         title: 'Doc. ID',
         field: 'docente',
-        width: 100,
+        width: 90,
         hozAlign: 'center',
+        formatter: (cell) => cell.getValue()
+          ? `<span class="asig-cell-id">${escapeHtml(cell.getValue())}</span>`
+          : '<span class="asig-cell-na">—</span>',
       },
       {
         title: 'Visible',
         field: 'visible',
-        width: 70,
+        width: 65,
         hozAlign: 'center',
         formatter: (cell) => cell.getValue() === 'S'
-          ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">Sí</span>'
-          : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600">No</span>',
+          ? '<span class="asig-badge-green">Sí</span>'
+          : '<span class="asig-badge-red">No</span>',
       },
       {
         title: 'Orden',
         field: 'orden',
-        width: 60,
+        width: 55,
         hozAlign: 'center',
+        formatter: (cell) => cell.getValue() != null
+          ? `<span class="asig-cell-ord">${cell.getValue()}</span>`
+          : '<span class="asig-cell-na">—</span>',
       },
       {
         title: 'Acciones',
-        width: 120,
+        width: 110,
         hozAlign: 'center',
         headerSort: false,
         formatter: (cell) => {
           const d = cell.getData();
-          return `
-            <div class="flex items-center justify-center gap-1">
-              <button class="btn-editar-asig px-2 py-1 text-xs rounded-lg text-[#543391] hover:bg-[#543391]/10 border border-[#543391]/30 transition-all" data-row="${d.ind}" title="Editar">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="btn-eliminar-asig px-2 py-1 text-xs rounded-lg text-red-600 hover:bg-red-50 border border-red-200 transition-all" data-ind="${d.ind}" title="Eliminar">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-          `;
+          return `<div class="asig-actions">
+            <button class="asig-btn-edit" data-row="${d.ind}" title="Editar"><i class="bi bi-pencil"></i></button>
+            <button class="asig-btn-del" data-ind="${d.ind}" title="Eliminar"><i class="bi bi-trash"></i></button>
+          </div>`;
         },
       },
     ];
@@ -403,11 +417,106 @@ class AsignacionesModule {
       selectable: false,
       movableColumns: true,
       resizableColumns: true,
+      rowFormatter: (row) => {
+        const d = row.getData();
+        if (d.visible === 'N') row.getElement().style.opacity = '0.55';
+      },
       columnDefaults: {
         headerFilter: false,
         headerSort: true,
       },
     });
+  }
+
+  /* ──────────────────────────────────────────────────────────────── */
+  /*  STYLES                                                         */
+  /* ──────────────────────────────────────────────────────────────── */
+
+  _injectStyles() {
+    const id = 'asig-styles';
+    if (document.getElementById(id)) return;
+    const style = document.createElement('style');
+    style.id = id;
+    style.textContent = `
+      .asig-filter-card{ background:#fff; border-radius:16px; padding:1rem 1.25rem;
+        margin-bottom:1rem; border:1px solid #eae8f0;
+        box-shadow:0 2px 12px -6px rgba(84,51,145,.08); }
+      .asig-filter-grid{ display:grid; grid-template-columns:repeat(2,1fr);
+        gap:.6rem .75rem; }
+      @media(min-width:640px){ .asig-filter-grid{ grid-template-columns:repeat(4,1fr); } }
+      @media(min-width:1024px){ .asig-filter-grid{ grid-template-columns:repeat(7,1fr); } }
+      .asig-filter-label{ display:block; font-size:10px; font-weight:700;
+        color:#7b6b99; text-transform:uppercase; letter-spacing:.04em;
+        margin-bottom:.25rem; }
+      .asig-filter-select,.asig-filter-input{ width:100%; padding:.45rem .55rem;
+        font-size:.8rem; border:1px solid #ddd8e8; border-radius:8px;
+        background:#fff; outline:none; transition:all .15s ease;
+        color:#2d2a3a; }
+      .asig-filter-select:focus,.asig-filter-input:focus{ border-color:#543391;
+        box-shadow:0 0 0 3px rgba(84,51,145,.12); }
+      .asig-filter-actions{ display:flex; align-items:flex-end; gap:.35rem; }
+      .asig-btn-primary{ flex:1; padding:.45rem .65rem; font-size:.8rem;
+        font-weight:600; color:#fff; background:#543391; border:none;
+        border-radius:8px; cursor:pointer; display:inline-flex;
+        align-items:center; justify-content:center; gap:.35rem;
+        transition:all .15s ease; }
+      .asig-btn-primary:hover{ background:#6f4ab3; }
+      .asig-btn-clear{ padding:.45rem .6rem; font-size:.8rem;
+        color:#8f80a8; background:transparent; border:1px solid #ddd8e8;
+        border-radius:8px; cursor:pointer; display:inline-flex;
+        align-items:center; justify-content:center; transition:all .15s ease; }
+      .asig-btn-clear:hover{ background:#f5f3ff; border-color:#c8bfda; color:#543391; }
+      .asig-toolbar{ display:flex; align-items:center; justify-content:space-between;
+        flex-wrap:wrap; gap:.5rem; margin-bottom:.6rem; }
+      .asig-count{ font-size:.78rem; color:#8f80a8; }
+      .asig-btn-add{ display:inline-flex; align-items:center; gap:.4rem;
+        padding:.45rem .85rem; font-size:.8rem; font-weight:600;
+        color:#fff; background:#059669; border:none; border-radius:8px;
+        cursor:pointer; transition:all .15s ease; }
+      .asig-btn-add:hover{ background:#047857; }
+      .asig-table-wrap{ background:#fff; border-radius:16px; overflow:hidden;
+        border:1px solid #eae8f0;
+        box-shadow:0 2px 12px -6px rgba(84,51,145,.08); }
+      .asig-table-wrap .tabulator{ border:none; border-radius:0; }
+      .asig-table-wrap .tabulator .tabulator-header{ background:#f8f7fc;
+        border-bottom:1.5px solid #e2dcee; }
+      .asig-table-wrap .tabulator .tabulator-header .tabulator-col{
+        background:transparent; border-right:1px solid #ede9f4; padding:.35rem .5rem; }
+      .asig-table-wrap .tabulator .tabulator-header .tabulator-col .tabulator-col-content{
+        padding:0; font-size:.7rem; font-weight:700; text-transform:uppercase;
+        letter-spacing:.04em; color:#6b5d86; }
+      .asig-table-wrap .tabulator .tabulator-row{ border-bottom:1px solid #f1eef7; }
+      .asig-table-wrap .tabulator .tabulator-row .tabulator-cell{
+        padding:.35rem .5rem; font-size:.78rem; color:#3f3854; }
+      .asig-table-wrap .tabulator .tabulator-row.tabulator-row-even{ background:#faf9fd; }
+      .asig-table-wrap .tabulator .tabulator-row:hover{ background:#f3f0fc; }
+      .asig-table-wrap .tabulator .tabulator-footer{ background:transparent;
+        border-top:1px solid #e2dcee; padding:.35rem .5rem; }
+      .asig-table-wrap .tabulator .tabulator-footer .tabulator-page-size,
+      .asig-table-wrap .tabulator .tabulator-footer .tabulator-paginator{ font-size:.75rem; }
+      .asig-cell-sede{ color:#4a3f5c; }
+      .asig-cell-na{ color:#b5aac8; font-style:italic; font-size:.72rem; }
+      .asig-cell-badge{ display:inline-flex; align-items:center; justify-content:center;
+        min-width:1.6rem; padding:.1rem .4rem; border-radius:6px;
+        font-size:.72rem; font-weight:600; background:#f0edf7; color:#4f3f78; }
+      .asig-cell-abrev{ font-family:monospace; font-size:.75rem; font-weight:600;
+        color:#5a4a7a; letter-spacing:.02em; }
+      .asig-cell-id{ font-family:monospace; font-size:.72rem; color:#7c6b9a; }
+      .asig-cell-ord{ font-size:.72rem; color:#7b6b99; }
+      .asig-badge-green{ display:inline-flex; padding:.12rem .5rem; border-radius:6px;
+        font-size:.68rem; font-weight:700; background:#d1fae5; color:#065f46; }
+      .asig-badge-red{ display:inline-flex; padding:.12rem .5rem; border-radius:6px;
+        font-size:.68rem; font-weight:700; background:#fee2e2; color:#991b1b; }
+      .asig-actions{ display:flex; align-items:center; justify-content:center; gap:.25rem; }
+      .asig-btn-edit,.asig-btn-del{ display:inline-flex; align-items:center; justify-content:center;
+        width:28px; height:28px; border-radius:7px; border:1px solid transparent;
+        cursor:pointer; transition:all .12s ease; font-size:.75rem; }
+      .asig-btn-edit{ color:#543391; border-color:#d5cce6; background:transparent; }
+      .asig-btn-edit:hover{ background:#543391; color:#fff; border-color:#543391; }
+      .asig-btn-del{ color:#dc2626; border-color:#fecaca; background:transparent; }
+      .asig-btn-del:hover{ background:#dc2626; color:#fff; border-color:#dc2626; }
+    `;
+    document.head.appendChild(style);
   }
 
   /* ──────────────────────────────────────────────────────────────── */

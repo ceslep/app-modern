@@ -62,7 +62,7 @@ if ($is_google_login) {
     $identificacion = '';
     $nombres = '';
 
-    $stmt = $mysqli->prepare("SELECT identificacion, nombres, pass, maestra, asignacion, idn, verEstudiantes, soloexcusas, activo, acceso_total FROM docentes WHERE correo = ? OR correo2 = ? LIMIT 1");
+    $stmt = $mysqli->prepare("SELECT identificacion, nombres, pass, maestra, asignacion, idn, verEstudiantes, soloexcusas, activo, acceso_total, correo FROM docentes WHERE correo = ? OR correo2 = ? LIMIT 1");
     $stmt->bind_param("ss", $email, $email);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -132,6 +132,16 @@ if ($is_google_login) {
         "datos" => $user_data
     ];
 
+    $periodoStmt = $mysqli->prepare("SELECT nombre FROM periodos WHERE CURDATE() BETWEEN fechainicial AND fechafinal AND nombre <> 'MINIMAS' LIMIT 1");
+    if ($periodoStmt) {
+        $periodoStmt->execute();
+        $periodoResult = $periodoStmt->get_result();
+        if ($periodoRow = $periodoResult->fetch_assoc()) {
+            $response['periodo'] = $periodoRow['nombre'];
+        }
+        $periodoStmt->close();
+    }
+
     setUserSession(
         $user_data['idn'] ?? bin2hex(random_bytes(12)),
         $nombres,
@@ -154,7 +164,7 @@ if (empty($identificacion) || empty($password_from_user)) {
     exit();
 }
 
-$stmt = $mysqli->prepare("SELECT identificacion, nombres, pass, maestra, asignacion, idn, verEstudiantes, soloexcusas, acceso_total FROM docentes WHERE identificacion = ? LIMIT 1");
+$stmt = $mysqli->prepare("SELECT identificacion, nombres, pass, maestra, asignacion, idn, verEstudiantes, soloexcusas, acceso_total, correo FROM docentes WHERE identificacion = ? LIMIT 1");
 $stmt->bind_param("s", $identificacion);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -204,6 +214,16 @@ $response = [
     "Maestra" => $is_maestra_login ? "Si" : "No",
     "datos" => $user_data
 ];
+
+$periodoStmt = $mysqli->prepare("SELECT nombre FROM periodos WHERE CURDATE() BETWEEN fechainicial AND fechafinal AND nombre <> 'MINIMAS' LIMIT 1");
+if ($periodoStmt) {
+    $periodoStmt->execute();
+    $periodoResult = $periodoStmt->get_result();
+    if ($periodoRow = $periodoResult->fetch_assoc()) {
+        $response['periodo'] = $periodoRow['nombre'];
+    }
+    $periodoStmt->close();
+}
 
 setUserSession(
     $user_data['idn'] ?? bin2hex(random_bytes(12)),

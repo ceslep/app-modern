@@ -890,7 +890,13 @@ class InformesModule {
 
     showLoading('Generando informe...');
     try {
-      const payload = this.buildReportPayload(est);
+      const payload = {
+        ...this.buildReportPayload(est),
+        puesto_ie: '',
+        puesto_grupo: '',
+        promedio: '',
+        createFolder: 'S',
+      };
       const response = await api.post('reports/report-card', payload);
       closeLoading();
 

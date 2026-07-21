@@ -371,10 +371,10 @@ try {
     $sheet->protectCells('A1:BH73', 'CHANGED_PASSWORD');
 
     // ── Save XLSX ───────────────────────────────────────────────────
-    // Estructura: xlsx/{nombre_sede}/{nivel}-{numero}/{nombres}-{estudiante}.xlsx
+    // Estructura: xlsx/{year}/{nombre_sede}/{nivel}-{numero}/{periodo}/{nombres}-{estudiante}.xlsx
     $xlsxRoot = __DIR__ . '/xlsx';
     if ($createFolder === 'S') {
-        $folder = $xlsxRoot . '/' . $sedeFolder . '/' . $nivel . '-' . $numero;
+        $folder = $xlsxRoot . '/' . $year_input . '/' . $sedeFolder . '/' . $nivel . '-' . $numero . '/' . $periodo_input;
     } else {
         $folder = $xlsxRoot;
     }
@@ -406,11 +406,11 @@ try {
     }
 
     // ── Response ────────────────────────────────────────────────────
-    $relativePath = 'xlsx/' . ($createFolder === 'S' ? $sedeFolder . '/' . $nivel . '-' . $numero . '/' : '') . $nombres . '-' . $estudiante;
+    $relativePath = 'server/legacy/xlsx/' . ($createFolder === 'S' ? $year_input . '/' . $sedeFolder . '/' . $nivel . '-' . $numero . '/' . $periodo_input . '/' : '') . $nombres . '-' . $estudiante;
     echo json_encode([
         'estado'   => 'ok',
         'href'     => $relativePath . '.xlsx',
-        'folder'   => ($createFolder === 'S' ? $sedeFolder . '/' . $nivel . '-' . $numero : ''),
+        'folder'   => ($createFolder === 'S' ? 'server/legacy/xlsx/' . $year_input . '/' . $sedeFolder . '/' . $nivel . '-' . $numero . '/' . $periodo_input : ''),
         'filename' => $relativePath,
         'datoss'   => $datoss,
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);

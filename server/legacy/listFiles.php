@@ -31,7 +31,7 @@ if (!in_array($folder, $allowed, true)) {
 }
 
 $roots = [
-    'xlsx' => APP_MODERN_ROOT . '/xlsx',
+    'xlsx' => LEGACY_PATH . '/xlsx',
     'pdfs' => LEGACY_PATH . '/pdfs',
 ];
 
@@ -123,13 +123,8 @@ function buildFileUrl(string $folder, string $fileRelative): string {
     $baseUrl      = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
     $encoded      = encodePath($fileRelative);
 
-    if ($folder === 'xlsx') {
-        // xlsx/ lives at project root
-        return $baseUrl . $projectPrefix . '/xlsx/' . $encoded;
-    }
-
-    // pdfs/ lives inside server/legacy/
-    return $baseUrl . $projectPrefix . '/server/legacy/pdfs/' . $encoded;
+    // Both xlsx/ and pdfs/ live inside server/legacy/
+    return $baseUrl . $projectPrefix . '/server/legacy/' . $folder . '/' . $encoded;
 }
 
 function formatBytes(int $bytes, int $precision = 1): string {

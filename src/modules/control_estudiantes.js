@@ -16,6 +16,64 @@ import { estudiantes } from '@services/estudiantes.js';
 import { escapeHtml, $, delegate } from '@utils/dom.js';
 import { alertSuccess, alertWarning, alertInfo, alertError, alertConfirm, showLoading, closeLoading } from '@utils/alert.js';
 import { showModal, hideModal } from '@utils/modal.js';
+import { changeGroupModal } from '@components/ChangeGroupModal.js';
+
+/**
+ * Parsea el campo legacy `institucion_externa` que almacena un historial
+ * en formato "Grado-Institución-Año-val1-val2-val3-val4..." separado por `-`.
+ * Retorna HTML de tabla o string vacío.
+ */
+function formatExternalHistory(str) {
+  if (!str) return '';
+  const body = str.replace(/^Grado-Institución-Año-?/i, '').trim();
+  const tokens = body.split('-').map(t => t.trim()).filter(Boolean);
+  if (tokens.length < 2) return escapeHtml(str);
+
+  const expanded = [];
+  for (const t of tokens) {
+    if (/^\d{4}\s+\d/.test(t)) {
+      expanded.push(...t.split(/\s+/));
+    } else if (/^\d{5,}$/.test(t) && /^\d{4}/.test(t)) {
+      expanded.push(t.slice(0, 4), t.slice(4));
+    } else {
+      expanded.push(t);
+    }
+  }
+
+  const rows = [];
+  let i = 0;
+  while (i < expanded.length) {
+    const grado = expanded[i++];
+    if (i >= expanded.length) break;
+    const nombre = expanded[i++];
+    let institucion = '';
+    let anio = '';
+    if (i < expanded.length) {
+      const n = expanded[i];
+      if (/^\d{4}$/.test(n)) {
+        anio = n; i++;
+      } else if (/^\d{1,2}$/.test(n)) {
+        /* siguiente grado, saltar */
+      } else {
+        institucion = n; i++;
+        if (i < expanded.length && /^\d{4}$/.test(expanded[i])) {
+          anio = expanded[i++];
+        }
+      }
+    }
+    if (institucion) rows.push({ grado, nombre, institucion, anio: Number(anio) || 0 });
+  }
+
+  rows.sort((a, b) => b.anio - a.anio);
+  if (rows.length === 0) return '';
+
+  let h = `<div class="hist-ext-wrap"><div class="hist-ext-title">Procedencia</div><table class="hist-ext-table"><thead><tr><th>#</th><th>Grado</th><th>Institución</th><th>Año</th></tr></thead><tbody>`;
+  rows.forEach((r, idx) => {
+    h += `<tr><td>${idx + 1}</td><td>${escapeHtml(r.nombre)}</td><td>${r.institucion ? escapeHtml(r.institucion) : '<span class="hist-ext-na">—</span>'}</td><td>${r.anio || '<span class="hist-ext-na">—</span>'}</td></tr>`;
+  });
+  h += `</tbody></table></div>`;
+  return h;
+}
 
 class ControlEstudiantesModule {
   constructor() {
@@ -191,6 +249,71 @@ class ControlEstudiantesModule {
         .estu-modal .estu-step-t{ font-size:.72rem; }
         .estu-modal .estu-content{ padding:1.1rem 1.1rem; }
       }
+
+      /* History modal - cards */
+      .estu-modal .hist-body{ background:#fff; }
+      .estu-modal .hist-wrap{ padding:.5rem .75rem 1rem; }
+      .estu-modal .hist-cards{ display:flex; flex-direction:column; gap:.4rem; }
+      .estu-modal .hist-card{ display:flex; gap:.6rem;
+        padding:.55rem .75rem; background:#fff; border-radius:12px;
+        border:1px solid var(--line); transition:all .15s ease; }
+      .estu-modal .hist-card:hover{ border-color:rgba(84,51,145,.2);
+        box-shadow:0 4px 14px -8px rgba(84,51,145,.16); }
+      .estu-modal .hist-card-top{ display:flex; flex-direction:column; align-items:center;
+        gap:.1rem; min-width:3.6rem; flex-shrink:0; }
+      .estu-modal .hist-card-num{ font-size:.6rem; color:var(--muted); font-weight:600; }
+      .estu-modal .hist-year{ display:inline-flex; align-items:center; gap:.35rem;
+        padding:.2rem .55rem; border-radius:8px; font-size:.78rem; font-weight:700;
+        background:linear-gradient(135deg,#54339118,#6d49b820); color:var(--brand);
+        white-space:nowrap; }
+      .estu-modal .hist-card-mid{ flex:1; min-width:0; display:flex;
+        flex-direction:column; gap:.1rem; justify-content:center; }
+      .estu-modal .hist-card-grade{ font-weight:700; font-size:.9rem; color:var(--ink);
+        line-height:1.3; }
+      .estu-modal .hist-card-meta{ display:flex; flex-wrap:wrap; align-items:center;
+        gap:.35rem .6rem; margin-top:.05rem; }
+      .estu-modal .hist-card-meta-item{ display:inline-flex; align-items:center;
+        gap:.25rem; font-size:.72rem; color:var(--muted); min-width:0;
+        max-width:100%; }
+      .estu-modal .hist-card-meta-item img{ width:12px; height:12px; object-fit:contain;
+        opacity:.45; flex-shrink:0; }
+      .estu-modal .hist-card-ext{ font-size:.72rem; color:#8b7f9e;
+        margin-top:.1rem; line-height:1.35; }
+      .estu-modal .hist-ext-wrap{ margin-top:.35rem; padding:.4rem .5rem;
+        background:#f8f7fc; border-radius:10px; border:1px solid #ede9f4; }
+      .estu-modal .hist-ext-title{ font-size:.63rem; font-weight:700;
+        text-transform:uppercase; letter-spacing:.05em; color:#7c6b9a;
+        margin-bottom:.2rem; }
+      .estu-modal .hist-ext-table{ width:100%; border-collapse:collapse; }
+      .estu-modal .hist-ext-table th{ font-size:.6rem; font-weight:700;
+        color:#8f7dab; text-transform:uppercase; letter-spacing:.04em;
+        text-align:left; padding:.2rem .35rem; border-bottom:1px solid #e2dcee; }
+      .estu-modal .hist-ext-table td{ font-size:.7rem; color:#4a3f5c;
+        padding:.2rem .35rem; border-bottom:1px solid #ede9f4; }
+      .estu-modal .hist-ext-table tr:last-child td{ border-bottom:none; }
+      .estu-modal .hist-ext-na{ color:#b0a5c2; font-style:italic; }
+      .estu-modal .hist-card-end{ flex-shrink:0; display:flex; align-items:center; }
+      .estu-modal .truncate{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+        min-width:0; }
+      .estu-modal .hist-cert-btn{ display:inline-flex; align-items:center; justify-content:center;
+        width:36px; height:36px; border-radius:10px; border:none; cursor:pointer;
+        background:linear-gradient(135deg,#d97706,#f59e0b); color:#fff;
+        box-shadow:0 4px 10px -4px rgba(217,119,6,.4); transition:all .18s ease; }
+      .estu-modal .hist-cert-btn:hover{ transform:translateY(-1.5px);
+        box-shadow:0 6px 16px -4px rgba(217,119,6,.55); }
+      .estu-modal .hist-cert-btn:active{ transform:scale(.92); }
+      .estu-modal .hist-state{ display:flex; flex-direction:column; align-items:center;
+        justify-content:center; padding:3rem 1.5rem; text-align:center; }
+      .estu-modal .hist-state-icon{ width:48px; height:48px; border-radius:16px;
+        display:flex; align-items:center; justify-content:center; margin-bottom:.75rem; }
+      .estu-modal .hist-state-title{ font-size:.95rem; font-weight:700; color:var(--ink); margin-bottom:.25rem; }
+      .estu-modal .hist-state-desc{ font-size:.8rem; color:var(--muted); max-width:20rem; }
+      @keyframes histFade{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+      .estu-modal .hist-row-in{ animation:histFade .3s ease both; }
+      .estu-modal .hist-count{ font-size:.75rem; color:var(--muted); display:flex; align-items:center; gap:.35rem; }
+      @media (max-width:767px){
+        .estu-modal .hist-wrap{ padding:.25rem .5rem .75rem; }
+      }
     `;
     document.head.appendChild(style);
   }
@@ -205,7 +328,6 @@ class ControlEstudiantesModule {
     this._injectStyles();
     container.insertAdjacentHTML('beforeend', this._editModalHTML());
     container.insertAdjacentHTML('beforeend', this._historyModalHTML());
-    container.insertAdjacentHTML('beforeend', this._changeGroupModalHTML());
     container.insertAdjacentHTML('beforeend', this._printCodesModalHTML());
   }
 
@@ -243,19 +365,19 @@ class ControlEstudiantesModule {
         <!-- Step rail -->
         <nav class="estu-rail" role="tablist" aria-label="Secciones del formulario">
           <button type="button" class="tab-btn estu-step" data-tab="datose" data-active="true" role="tab" aria-selected="true" aria-controls="tab-datose">
-            <span class="estu-step-ic"><i class="bi bi-person-vcard"></i></span>
+            <span class="estu-step-ic"><img src="https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-4YgqFomK3IPstJMGcAzOFcdMfTg5C0.png" alt="" width="20" height="20" style="width:20px;height:20px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15))" loading="lazy"></span>
             <span class="estu-step-tx"><span class="estu-step-t">Estudiante</span><span class="estu-step-s">Datos personales</span></span>
           </button>
           <button type="button" class="tab-btn estu-step" data-tab="datosacademicos" role="tab" aria-selected="false" aria-controls="tab-datosacademicos">
-            <span class="estu-step-ic"><i class="bi bi-mortarboard"></i></span>
+            <span class="estu-step-ic"><img src="https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-Zx1NaF1IKpAnBA6OXF2LOWL7DDOWcG.png" alt="" width="20" height="20" style="width:20px;height:20px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15))" loading="lazy"></span>
             <span class="estu-step-tx"><span class="estu-step-t">Académica</span><span class="estu-step-s">Grupo y estado</span></span>
           </button>
           <button type="button" class="tab-btn estu-step" data-tab="datospadres" role="tab" aria-selected="false" aria-controls="tab-datospadres">
-            <span class="estu-step-ic"><i class="bi bi-people"></i></span>
+            <span class="estu-step-ic"><img src="https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-iSpZcrHmxvZHZPeIwv3rttJNK7TGqu.png" alt="" width="20" height="20" style="width:20px;height:20px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15))" loading="lazy"></span>
             <span class="estu-step-tx"><span class="estu-step-t">Familia</span><span class="estu-step-s">Padres y acudiente</span></span>
           </button>
           <button type="button" class="tab-btn estu-step" data-tab="referencial" role="tab" aria-selected="false" aria-controls="tab-referencial">
-            <span class="estu-step-ic"><i class="bi bi-clipboard-data"></i></span>
+            <span class="estu-step-ic"><img src="https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-OY3MUpW2C7znoiJ6DlQN93Ku9ixhDJ.png" alt="" width="20" height="20" style="width:20px;height:20px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15))" loading="lazy"></span>
             <span class="estu-step-tx"><span class="estu-step-t">Referencial</span><span class="estu-step-s">Datos sociales</span></span>
           </button>
         </nav>
@@ -266,7 +388,7 @@ class ControlEstudiantesModule {
           <div class="tab-pane active" id="tab-datose">
             <fieldset class="border-0 rounded-xl p-5 mb-4" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-left: 4px solid #0078D4;">
               <legend class="text-sm font-semibold text-[#0078D4] flex items-center gap-2 mb-3 px-2">
-                <i class="bi bi-person-badge"></i> Información de Identificación
+                <img src="https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-gahIe45OSBuvqPogVpr3KaBJF0zCSL.png" alt="" width="24" height="24" style="width:24px;height:24px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15))" loading="lazy"> Información de Identificación
               </legend>
               <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
                 <div>
@@ -362,7 +484,7 @@ class ControlEstudiantesModule {
           <div class="tab-pane hidden" id="tab-datosacademicos">
             <fieldset class="border-0 rounded-xl p-5 mb-4" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-left: 4px solid #107C10;">
               <legend class="text-sm font-semibold text-[#107C10] flex items-center gap-2 mb-3 px-2">
-                <i class="bi bi-book"></i> Información Académica
+                <img src="https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-S4uSpPnTp4twy9dQ0gSVfwPIGe7R8s.png" alt="" width="24" height="24" style="width:24px;height:24px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15))" loading="lazy"> Información Académica
               </legend>
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                 <div>
@@ -430,7 +552,7 @@ class ControlEstudiantesModule {
           <div class="tab-pane hidden" id="tab-datospadres">
             <fieldset class="border-0 rounded-xl p-5 mb-4" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-left: 4px solid #8764B8;">
               <legend class="text-sm font-semibold text-[#8764B8] flex items-center gap-2 mb-3 px-2">
-                <i class="bi bi-person-heart"></i> Datos del Acudiente
+                <img src="https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-09u20y0NinByffSdtLy2IKsIX9tdy0.png" alt="" width="24" height="24" style="width:24px;height:24px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15))" loading="lazy"> Datos del Acudiente
               </legend>
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                 <div>
@@ -470,7 +592,7 @@ class ControlEstudiantesModule {
               <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-2">
                 <!-- Padre -->
                 <div class="bg-white/60 rounded-lg p-4 border border-gray-100">
-                  <h6 class="text-xs font-semibold text-[#8764B8] uppercase tracking-wide mb-3 flex items-center gap-1.5"><i class="bi bi-person"></i> Padre</h6>
+                  <h6 class="text-xs font-semibold text-[#8764B8] uppercase tracking-wide mb-3 flex items-center gap-1.5"><img src="https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-keoWINYYBgXx7vwibZe2cbllJ4SaQA.png" alt="" width="20" height="20" style="width:20px;height:20px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15))" loading="lazy"> Padre</h6>
                   <div class="space-y-3">
                     <div>
                       <label for="epadre" class="block text-xs font-medium text-gray-600 mb-1">Nombre</label>
@@ -494,7 +616,7 @@ class ControlEstudiantesModule {
                 </div>
                 <!-- Madre -->
                 <div class="bg-white/60 rounded-lg p-4 border border-gray-100">
-                  <h6 class="text-xs font-semibold text-[#8764B8] uppercase tracking-wide mb-3 flex items-center gap-1.5"><i class="bi bi-person"></i> Madre</h6>
+                  <h6 class="text-xs font-semibold text-[#8764B8] uppercase tracking-wide mb-3 flex items-center gap-1.5"><img src="https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-HOLCUQcjFPgJhrnLCKwCMaCRv8OA2g.png" alt="" width="20" height="20" style="width:20px;height:20px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15))" loading="lazy"> Madre</h6>
                   <div class="space-y-3">
                     <div>
                       <label for="emadre" class="block text-xs font-medium text-gray-600 mb-1">Nombre</label>
@@ -524,7 +646,7 @@ class ControlEstudiantesModule {
           <div class="tab-pane hidden" id="tab-referencial">
             <fieldset class="border-0 rounded-xl p-5 mb-4" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-left: 4px solid #D83B01;">
               <legend class="text-sm font-semibold text-[#D83B01] flex items-center gap-2 mb-3 px-2">
-                <i class="bi bi-info-circle"></i> Información Referencial
+                <img src="https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-DumK8ISkd9UvCLE6rmGFPz31M62DtG.png" alt="" width="24" height="24" style="width:24px;height:24px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15))" loading="lazy"> Información Referencial
               </legend>
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                 <div>
@@ -596,82 +718,43 @@ class ControlEstudiantesModule {
   }
 
   _historyModalHTML() {
+    const timelineIcon = 'https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-0HOGBvk9hjMx58XinZZOpCjyVQjJX9.png';
     return `
-<div id="modalHgrupos" class="modal fixed inset-0 z-[1056] flex items-center justify-center hidden">
-  <div class="relative z-[1060] w-full max-w-5xl mx-4 bg-white rounded-2xl shadow-2xl max-h-[85vh] flex flex-col overflow-hidden">
-    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100" style="background: linear-gradient(135deg, #107C10 0%, #0D6B0D 100%);">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center text-white">
-          <i class="bi bi-clock-history text-sm"></i>
+<div id="modalHgrupos" class="estu-modal modal fixed inset-0 z-[1056] flex items-center justify-center hidden p-3 sm:p-6">
+  <div class="estu-card relative z-[1060] w-full max-w-5xl bg-white rounded-3xl overflow-hidden flex flex-col max-h-[94vh]">
+    <div class="estu-header relative px-6 sm:px-8 py-5 sm:py-6" style="background:linear-gradient(120deg,#3d2670 0%,#543391 45%,#7c5cc4 100%)">
+      <div class="estu-header-glow" style="background:radial-gradient(120% 140% at 88% -20%, rgba(255,255,255,.28), transparent 55%), radial-gradient(90% 120% at 8% 120%, rgba(16,185,129,.35), transparent 60%)"></div>
+      <div class="relative flex items-center justify-between gap-4">
+        <div class="flex items-center gap-4 min-w-0">
+          <div class="estu-avatar shrink-0" style="width:52px;height:52px;border-radius:16px">
+            <img src="${timelineIcon}" alt="" width="26" height="26" style="width:26px;height:26px;object-fit:contain;filter:brightness(10)" loading="lazy">
+          </div>
+          <div class="min-w-0">
+            <h5 class="text-lg sm:text-xl font-semibold text-white leading-tight truncate">Historial del Estudiante</h5>
+            <p class="text-xs text-white/70 mt-1 truncate" id="historialStudentName">Cargando...</p>
+          </div>
         </div>
-        <div>
-          <h5 class="text-base font-semibold text-white">Historial del Estudiante</h5>
-          <p class="text-xs text-white/70" id="historialStudentName">Cargando...</p>
-        </div>
-      </div>
-      <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all" data-modal-dismiss="modalHgrupos">
-        <i class="bi bi-x-lg text-sm"></i>
-      </button>
-    </div>
-    <div class="overflow-y-auto p-6 bg-gray-50 flex-1">
-      <div id="histgrupos" class="overflow-x-auto">
-        <div class="flex justify-center py-12">
-          <div class="w-10 h-10 border-4 border-[#107C10] border-t-transparent rounded-full animate-spin"></div>
-        </div>
+        <button type="button" class="estu-close shrink-0" data-modal-dismiss="modalHgrupos" aria-label="Cerrar">
+          <i class="bi bi-x-lg"></i>
+        </button>
       </div>
     </div>
-    <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl">
+    <div class="hist-body flex-1 flex flex-col min-h-0 overflow-hidden">
+      <div id="histgrupos" class="hist-wrap flex-1 overflow-y-auto">
+        <div class="hist-state">
+          <div class="hist-state-icon" style="background:linear-gradient(135deg,#54339118,#6d49b820)">
+            <div class="w-7 h-7 border-[3px] border-[#543391] border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <div class="hist-state-title">Cargando historial...</div>
+          <div class="hist-state-desc">Obteniendo registros académicos del estudiante</div>
+        </div>
+      </div>
+    </div>
+    <div class="estu-footer flex items-center justify-between gap-3 px-6 sm:px-8 py-4">
+      <span class="hist-count"><span id="historialCount">0</span> registros encontrados</span>
       <button type="button" data-modal-dismiss="modalHgrupos"
-              class="px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all">
+              class="px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all">
         Cerrar
-      </button>
-    </div>
-  </div>
-</div>`;
-  }
-
-  _changeGroupModalHTML() {
-    return `
-<div id="modalCHGgrupos" class="modal fixed inset-0 z-[1056] flex items-center justify-center hidden">
-  <div class="relative z-[1060] w-full max-w-lg mx-4 bg-white rounded-2xl shadow-2xl">
-    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100" style="background: linear-gradient(135deg, #D83B01 0%, #B32D00 100%);">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center text-white">
-          <i class="bi bi-shuffle text-sm"></i>
-        </div>
-        <div>
-          <h5 class="text-base font-semibold text-white">Cambiar Grupo</h5>
-          <p class="text-xs text-white/70" id="chgest">Seleccione un nuevo grupo</p>
-        </div>
-      </div>
-      <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all" data-modal-dismiss="modalCHGgrupos">
-        <i class="bi bi-x-lg text-sm"></i>
-      </button>
-    </div>
-    <div class="p-6">
-      <div class="space-y-4">
-        <div>
-          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nuevo Grupo</label>
-          <select id="nuevo_grado" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-[#D83B01]/30 focus:border-[#D83B01] outline-none transition-all">
-            <option value="">Cargando grados disponibles...</option>
-          </select>
-        </div>
-        <div class="flex items-center gap-2 mt-4">
-          <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-[#D83B01] focus:ring-[#D83B01]" id="chkChangeGroupConfirm">
-          <label class="text-sm text-gray-600" for="chkChangeGroupConfirm">Confirmar cambio de grupo</label>
-        </div>
-      </div>
-    </div>
-    <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl">
-      <button type="button" data-modal-dismiss="modalCHGgrupos"
-              class="px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all">
-        Cancelar
-      </button>
-      <button type="button" id="btnConfirmChangeGroup"
-              class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#D83B01] hover:bg-[#B32D00] text-white font-medium rounded-xl shadow-sm transition-all text-sm"
-              disabled>
-        <i class="bi bi-shuffle"></i> Cambiar Grupo
-        <span class="spinner-border spinner-border-sm hidden"></span>
       </button>
     </div>
   </div>
@@ -1165,6 +1248,41 @@ class ControlEstudiantesModule {
   /*  ACTION HANDLERS                                                 */
   /* ──────────────────────────────────────────────────────────────── */
 
+  _onNewStudent() {
+    const form = $('frmEstugrupos');
+    if (form) form.reset();
+
+    // Remove readonly from all editable fields
+    form?.querySelectorAll('input[readonly], input.bg-gray-100').forEach(el => {
+      el.removeAttribute('readonly');
+      el.classList.remove('bg-gray-100', 'cursor-not-allowed');
+    });
+
+    this.editando = false;
+    const editandoField = $('eeditando');
+    if (editandoField) editandoField.value = 'false';
+
+    // Auto-fill year
+    const yearField = $('eyear');
+    if (yearField) yearField.value = String(this.currentYear);
+
+    // Clear header
+    const avatar = $('estuAvatarInitial');
+    if (avatar) avatar.textContent = 'N';
+    const nameEl = $('estuModalName');
+    if (nameEl) nameEl.textContent = 'Nuevo Estudiante';
+    const idEl = $('estuModalId');
+    if (idEl) idEl.innerHTML = '<i class="bi bi-hash"></i><span>Nuevo</span>';
+    const gradoEl = $('estuModalGrado');
+    if (gradoEl) gradoEl.innerHTML = '<i class="bi bi-mortarboard-fill"></i><span>—</span>';
+
+    this._switchTab('datose');
+    const content = document.querySelector('#modalEstugrupos .estu-content');
+    if (content) content.scrollTop = 0;
+
+    showModal('modalEstugrupos');
+  }
+
   _onEditStudent(data) {
     if (!data) return;
 
@@ -1200,7 +1318,7 @@ class ControlEstudiantesModule {
     const gradoEl = $('estuModalGrado');
     if (gradoEl) gradoEl.innerHTML = `<i class="bi bi-mortarboard-fill"></i><span>${escapeHtml(`${data.nivel ?? ''}-${data.numero ?? ''}`)} · ${escapeHtml(data.sede || '')}</span>`;
 
-    // Activate first tab (rail uses data-active + CSS)
+    // Activate first tab
     this._switchTab('datose');
     const content = document.querySelector('#modalEstugrupos .estu-content');
     if (content) content.scrollTop = 0;
@@ -1239,9 +1357,14 @@ class ControlEstudiantesModule {
 
     const container = $('histgrupos');
     if (container) {
-      container.innerHTML = `<div class="flex justify-center py-12">
-        <div class="w-10 h-10 border-4 border-[#107C10] border-t-transparent rounded-full animate-spin"></div>
-      </div>`;
+      container.innerHTML = `
+        <div class="hist-state">
+          <div class="hist-state-icon" style="background:linear-gradient(135deg,#54339118,#6d49b820)">
+            <div class="w-7 h-7 border-[3px] border-[#543391] border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <div class="hist-state-title">Cargando historial...</div>
+          <div class="hist-state-desc">Obteniendo registros académicos del estudiante</div>
+        </div>`;
     }
 
     showModal('modalHgrupos');
@@ -1249,107 +1372,71 @@ class ControlEstudiantesModule {
     try {
       const historial = await estudiantes.getHistory(data.estudiante);
 
+      const countEl = $('historialCount');
+
       if (!Array.isArray(historial) || historial.length === 0) {
         if (container) {
-          container.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="bi bi-inbox text-4xl block mb-2"></i>No se encontró historial para este estudiante</div>';
+          container.innerHTML = `
+            <div class="hist-state">
+              <div class="hist-state-icon" style="background:linear-gradient(135deg,#f59e0b18,#d9770620)">
+                <img src="https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-0HOGBvk9hjMx58XinZZOpCjyVQjJX9.png" alt="" width="26" height="26" style="width:26px;height:26px;object-fit:contain;opacity:.5" loading="lazy">
+              </div>
+              <div class="hist-state-title">Sin historial</div>
+              <div class="hist-state-desc">No se encontraron registros académicos previos para este estudiante</div>
+            </div>`;
         }
+        if (countEl) countEl.textContent = '0';
         return;
       }
 
-      let html = `<div class="overflow-x-auto">
-        <table class="w-full text-sm text-left">
-          <thead>
-            <tr class="bg-gray-100 border-b-2 border-gray-200">
-              <th class="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider text-center">N°</th>
-              <th class="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider text-center">Año</th>
-              <th class="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider text-center">Nivel</th>
-              <th class="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider text-center">Número</th>
-              <th class="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Sede</th>
-              <th class="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Institución Externa</th>
-              <th class="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Director</th>
-              <th class="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider text-center">Cert.</th>
-            </tr>
-          </thead>
-          <tbody>`;
+      if (countEl) countEl.textContent = String(historial.length);
+
+      const buildingIcon = 'https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-iU4rmwBdlMt24UolY2WynkeolDz2nj.png';
+      const userIcon = 'https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-dae1lHATNY8hkh3GxeAnScrtd34Ii5.png';
+      const docIcon = 'https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-BjimxRD0gb4rZBjr9jbO9LYXmOZJao.png';
+
+      let html = `<div class="hist-cards">`;
 
       historial.forEach((historia, idx) => {
-        const { estudiante, director, nivel, numero, sede, year, institucion_externa } = historia;
+        const { director, nivel, numero, sede, year, institucion_externa } = historia;
         const histDataStr = escapeHtml(JSON.stringify(historia));
+        const delay = Math.min(idx * 40, 400);
         html += `
-          <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-            <td class="px-4 py-3 text-center text-gray-500">${idx + 1}</td>
-            <td class="px-4 py-3 text-center font-medium">${year}</td>
-            <td class="px-4 py-3 text-center">${nivel}</td>
-            <td class="px-4 py-3 text-center">${numero}</td>
-            <td class="px-4 py-3">${sede || ''}</td>
-            <td class="px-4 py-3">${institucion_externa || ''}</td>
-            <td class="px-4 py-3">${director || ''}</td>
-            <td class="px-4 py-3 text-center">
-              <button class="px-2 py-1 text-xs font-medium rounded-lg bg-amber-500 hover:bg-amber-600 text-white transition-colors hist-cert-btn" data-hist='${histDataStr}'>
-                <i class="bi bi-file-earmark-arrow-down"></i>
+          <div class="hist-card hist-row-in" style="animation-delay:${delay}ms">
+            <div class="hist-card-top">
+              <span class="hist-year">${year}</span>
+              <span class="hist-card-num">#${idx + 1}</span>
+            </div>
+            <div class="hist-card-mid">
+              <div class="hist-card-grade">${nivel}-${numero}</div>
+              <div class="hist-card-meta">
+                ${sede ? `<span class="hist-card-meta-item"><img src="${buildingIcon}" alt="" width="12" height="12" loading="lazy"><span class="truncate">${escapeHtml(sede)}</span></span>` : ''}
+                ${director ? `<span class="hist-card-meta-item"><img src="${userIcon}" alt="" width="12" height="12" loading="lazy"><span class="truncate">${escapeHtml(director)}</span></span>` : ''}
+              </div>
+              ${institucion_externa ? formatExternalHistory(institucion_externa) : ''}
+            </div>
+            <div class="hist-card-end">
+              <button type="button" class="hist-cert-btn" data-hist='${histDataStr}' title="Certificado de ${year}">
+                <img src="${docIcon}" alt="" width="16" height="16" style="object-fit:contain;filter:brightness(10)" loading="lazy">
               </button>
-            </td>
-          </tr>`;
+            </div>
+          </div>`;
       });
 
-      html += '</tbody></table></div>';
+      html += '</div>';
       if (container) container.innerHTML = html;
 
     } catch (error) {
       if (container) {
-        container.innerHTML = `<div class="text-center py-12 text-red-500">
-          <i class="bi bi-exclamation-triangle text-2xl block mb-2"></i>
-          Error al cargar historial: ${escapeHtml(error.message)}
-        </div>`;
+        container.innerHTML = `
+          <div class="hist-state">
+            <div class="hist-state-icon" style="background:linear-gradient(135deg,#ef444418,#dc262620)">
+              <img src="https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-0HOGBvk9hjMx58XinZZOpCjyVQjJX9.png" alt="" width="26" height="26" style="width:26px;height:26px;object-fit:contain;opacity:.5" loading="lazy">
+            </div>
+            <div class="hist-state-title" style="color:#dc2626">Error al cargar</div>
+            <div class="hist-state-desc">${escapeHtml(error.message)}</div>
+          </div>`;
       }
-    }
-  }
-
-  async _onChangeGroup(data) {
-    if (!data) return;
-
-    const { estudiante, asignacion, nivel, numero, grado, year } = data;
-
-    const labelEl = $('chgest');
-    if (labelEl) labelEl.textContent = `Cambiando: ${data.nombres || ''} (${nivel}-${numero})`;
-
-    const select = $('nuevo_grado');
-    if (select) {
-      select.innerHTML = '<option value="">Cargando...</option>';
-      select.disabled = true;
-    }
-
-    const confirmBtn = $('btnConfirmChangeGroup');
-    if (confirmBtn) confirmBtn.disabled = true;
-    const checkbox = $('chkChangeGroupConfirm');
-    if (checkbox) checkbox.checked = false;
-
-    showModal('modalCHGgrupos');
-
-    try {
-      const targetYear = year || this.currentYear;
-      const nivelsel = await estudiantes.getGroupTargets({ asignacion, nivel, numero, year: targetYear });
-
-      if (!Array.isArray(nivelsel) || nivelsel.length === 0) {
-        if (select) {
-          select.innerHTML = '<option value="">No hay grupos disponibles</option>';
-          select.disabled = true;
-        }
-        return;
-      }
-
-      if (select) {
-        select.innerHTML = '<option value="">Seleccione un grupo...</option>' + nivelsel.map(n => {
-          const optData = JSON.stringify({ ...n, asignacion, estudiante, grado: n.grado || `${n.nivel}-${n.numero}` });
-          return `<option value='${escapeHtml(optData)}'>${n.nivel}-${n.numero}</option>`;
-        }).join('');
-        select.disabled = false;
-      }
-    } catch (error) {
-      if (select) {
-        select.innerHTML = '<option value="">Error al cargar grupos</option>';
-      }
-      alertError('Error', error.message);
     }
   }
 
@@ -1521,6 +1608,11 @@ class ControlEstudiantesModule {
       if (si) si.focus();
     });
 
+    delegate(section, 'click', '#btnNewEstu', (e) => {
+      e.preventDefault();
+      this._onNewStudent();
+    });
+
     delegate(section, 'click', '#btnCodesEstu', () => {
       alertWarning('Códigos', 'Funcionalidad de códigos en desarrollo.');
     });
@@ -1551,11 +1643,11 @@ class ControlEstudiantesModule {
       } catch { /* ignore */ }
     });
 
-    // ── Change group button ──
+    // ── Change group button → external component ──
     delegate(section, 'click', '.fluent-btn-change', (e, target) => {
       try {
         const data = JSON.parse(target.dataset.est);
-        this._onChangeGroup(data);
+        changeGroupModal.open({ ...data, onSuccess: () => this.loadStudents(this.currentYear) });
       } catch { /* ignore */ }
     });
 
@@ -1592,59 +1684,7 @@ class ControlEstudiantesModule {
       }
     });
 
-    // ── Change group confirm checkbox ──
-    delegate(document, 'change', '#chkChangeGroupConfirm', (e, target) => {
-      const btn = $('btnConfirmChangeGroup');
-      if (btn) btn.disabled = !target.checked;
-    });
-
-    // ── Change group select enables confirm ──
-    delegate(document, 'change', '#nuevo_grado', () => {
-      const checkbox = $('chkChangeGroupConfirm');
-      if (checkbox) checkbox.checked = false;
-      const btn = $('btnConfirmChangeGroup');
-      if (btn) btn.disabled = true;
-    });
-
-    // ── Confirm change group ──
-    delegate(document, 'click', '#btnConfirmChangeGroup', async (e, target) => {
-      const select = $('nuevo_grado');
-      if (!select || !select.value) {
-        alertWarning('Seleccione un grupo', 'Debe seleccionar un grupo destino.');
-        return;
-      }
-
-      const spinner = target.querySelector('.spinner-border');
-      if (spinner) spinner.classList.remove('hidden');
-      target.disabled = true;
-
-      try {
-        // Parse selected option data (incluye asignacion, estudiante, nivel, numero, grado)
-        const opt = JSON.parse(select.value);
-        const res = await estudiantes.changeGroup({
-          estudiante: opt.estudiante,
-          asignacion: opt.asignacion,
-          nivel: opt.nivel,
-          numero: opt.numero,
-          grado: opt.grado || `${opt.nivel}-${opt.numero}`,
-        });
-        if (res && res.error) {
-          alertError('Error', res.details || res.error);
-          return;
-        }
-        alertSuccess('Grupo cambiado', `Estudiante movido a ${opt.nivel}-${opt.numero}.`);
-        hideModal('modalCHGgrupos');
-        // Recarga para reflejar el nuevo grupo y notas migradas
-        this.loadStudents(this.currentYear);
-      } catch (error) {
-        alertError('Error', error.message);
-      } finally {
-        if (spinner) spinner.classList.add('hidden');
-        target.disabled = false;
-      }
-    });
-
-    // ── Save estudiante ──
+    // ── Save estudiante (create or update) ──
     delegate(document, 'click', '#btnSaveEstudiante', async (e, target) => {
       const form = $('frmEstugrupos');
       if (!form) return;
@@ -1652,7 +1692,6 @@ class ControlEstudiantesModule {
       const data = {};
       form.querySelectorAll('input, select, textarea').forEach(el => {
         if (el.id) {
-          // Remove leading 'e' to get the key
           const key = el.id.startsWith('e') ? el.id.substring(1) : el.id;
           if (key !== 'ind' && key !== 'editando') {
             data[key] = el.value;
@@ -1661,24 +1700,24 @@ class ControlEstudiantesModule {
       });
       data.ind = $('eind')?.value || '';
 
-      if (!data.ind) {
-        alertWarning('Sin registro', 'No se pudo identificar el estudiante a actualizar.');
-        return;
-      }
-
-      showLoading('Guardando...');
+      const isNew = !this.editando || !data.ind;
+      showLoading(isNew ? 'Creando estudiante...' : 'Guardando...');
       try {
-        const res = await estudiantes.update(data);
+        const res = isNew ? await estudiantes.create(data) : await estudiantes.update(data);
         closeLoading();
         if (res && res.exito === false) {
           alertError('Error al guardar', res.mensaje || 'No se pudieron guardar los cambios.');
           return;
         }
-        alertSuccess('Estudiante actualizado', 'Los cambios han sido guardados correctamente.');
+        const msg = isNew ? 'Estudiante creado correctamente.' : 'Los cambios han sido guardados correctamente.';
+        alertSuccess(isNew ? 'Estudiante creado' : 'Estudiante actualizado', msg);
         hideModal('modalEstugrupos');
-        // Refleja los cambios en la fila sin recargar todo
-        this._patchLocalStudent(data);
-        this._applyFiltersAndRender();
+        if (isNew) {
+          this.loadStudents(this.currentYear);
+        } else {
+          this._patchLocalStudent(data);
+          this._applyFiltersAndRender();
+        }
       } catch (error) {
         closeLoading();
         alertError('Error al guardar', error.message);

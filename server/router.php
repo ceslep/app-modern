@@ -19,6 +19,7 @@ $routeMap = [
   'students/group-history'  => 'getHistorial.php',
   'students/group-targets'  => 'getNN.php',
   'students/update'         => 'setEstugrupos.php',
+  'students/create'         => 'setEstugrupos.php',
   'students/change-group'   => 'cambia_grado.php',
   'students/grades-summary' => 'getNotas.php',
   'students/attendance-summary' => 'getInasistencias.php',
@@ -120,12 +121,21 @@ $routeMap = [
   // Asignaciones (CRUD para asignacion_asignaturas)
   'asignaciones'            => 'getAsignaciones.php',
 
+  // Custom motivos (creados por docentes)
+  'motivos/custom'           => 'getMotivosCustom.php',
+  'motivos/custom/create'    => 'crearMotivoCustom.php',
+  'motivos/custom/delete'    => 'eliminarMotivoCustom.php',
+
   // Config (delega a ConfigPorcentajesController moderno)
   'config/porcentajes'      => 'config_porcentajes.php',
   'config/grant-access'     => 'config_porcentajes.php',
 
   // Dashboard
   'dashboard/summary'       => 'getDashboardSummary.php',
+
+  // Activity (module access tracking)
+  'activity/recent'         => 'getActividadReciente.php',
+  'activity/log'            => 'getActividadReciente.php',
 
   // Dev (shims que reusan la lógica moderna — el legacy router no tiene
   // acceso a los controllers de /api.php/v1/dev/*)

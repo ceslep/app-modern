@@ -17,6 +17,12 @@
       "sourceType": "autoskills-registry",
       "computedHash": "82fb11a63fb1e35ee2469516ed02d54695f783115b1540c0e783197af4240a3a"
     },
+    "higgsfield-websites": {
+      "source": "higgsfield-ai/skills",
+      "sourceType": "github",
+      "skillPath": "higgsfield-websites/SKILL.md",
+      "computedHash": "527dc01892642ead378d342680108e3524cdf719b78657b19ccbed7ba3b40dd8"
+    },
     "mcp-builder": {
       "source": "anthropics/skills",
       "sourceType": "github",

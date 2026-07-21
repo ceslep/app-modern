@@ -11,6 +11,7 @@
 
 import { auth } from '@services/auth.js';
 import { notifications } from '@services/notifications.js';
+import { activity } from '@services/activity.js';
 import { api } from '@services/api.js';
 import { navigateToSection } from '@components/sidebar.js';
 import { delegate } from '@utils/dom.js';
@@ -39,11 +40,13 @@ export function initDashboard() {
 
   // ---- Section: stats row (bento 3 cols) ----
   const statsEl = renderStats([
-    { id: 'valoraciones', label: '% Valoraciones', icon: 'bi-bar-chart-fill', iconClass: 'icon-violet', badge: { text: 'Periodo actual', variant: 'live' }, trend: null, suffix: '%' },
-    { id: 'estudiantes', label: 'Estudiantes a cargo', icon: 'bi-people-fill', iconClass: 'icon-primary', badge: { text: 'Hoy', variant: 'live' }, trend: null },
-    { id: 'asignaturas', label: 'Asignaturas', icon: 'bi-journal-bookmark-fill', iconClass: 'icon-emerald', badge: null, trend: null },
-    { id: 'informes', label: 'Informes y Consultas', icon: 'bi-file-earmark-bar-graph-fill', iconClass: 'icon-amber', badge: null, trend: null },
-    { id: 'notificaciones', label: 'Notificaciones', icon: 'bi-bell-fill', iconClass: 'icon-red', badge: { text: 'En vivo', variant: 'live' }, trend: null },
+    { id: 'valoraciones', label: '% Valoraciones', icon: 'https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-73pNGHJBFF75t0zRsAgQInW9DAM4vd.png', iconClass: 'icon-violet', badge: { text: 'Periodo actual', variant: 'live' }, trend: null, suffix: '%' },
+    { id: 'estudiantes', label: 'Estudiantes a cargo', icon: 'https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-WaLIdwjgmqnfE0GndCGu1R9ReZOal5.png', iconClass: 'icon-primary', badge: { text: 'Hoy', variant: 'live' }, trend: null },
+    { id: 'asignaturas', label: 'Asignaturas', icon: 'https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-V5g1BA4Fg3Mgks7vN6n3eaXb8KBz0g.png', iconClass: 'icon-emerald', badge: null, trend: null },
+    { id: 'inasistencias', label: 'Inasistencias', icon: 'https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-ij7GEZhfmzLNlLgDJVhkST8FIm5rJV.png', iconClass: 'icon-sky', badge: null, trend: null },
+    { id: 'convivencia', label: 'Convivencia', icon: 'https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-h0hzCqnJZkRGDg1z3YSvUnJV77Ck6f.png', iconClass: 'icon-amber', badge: null, trend: null },
+    { id: 'descripciones', label: 'Descripciones', icon: 'https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-73pNGHJBFF75t0zRsAgQInW9DAM4vd.png', iconClass: 'icon-sky', badge: { text: 'Período actual', variant: 'live' }, trend: null },
+    { id: 'notificaciones', label: 'Notificaciones', icon: 'https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-CK4odMSKWdmIj0ueBtNq9HOZR6Fbgv.png', iconClass: 'icon-red', badge: { text: 'En vivo', variant: 'live' }, trend: null },
   ]);
   root.appendChild(statsEl);
 
@@ -128,10 +131,24 @@ async function hydrate(container, statsEl) {
       updateStat(statsEl, 'estudiantes', d.total_estudiantes ?? 0);
       updateStat(statsEl, 'asignaturas', d.total_asignaturas ?? 0);
       updateStat(statsEl, 'valoraciones', d.porcentaje_valoraciones ?? 0, { decimals: 1 });
+      updateStat(statsEl, 'inasistencias', d.total_inasistencias ?? 0);
+      updateStat(statsEl, 'convivencia', d.total_convivencia ?? 0);
+      updateStat(statsEl, 'descripciones', d.total_descripciones ?? 0);
       const badge = statsEl.querySelector('[data-stat-id="valoraciones"] .db-stat-badge');
       if (badge) badge.textContent = d.periodo_actual || 'Periodo actual';
+      const descBadge = statsEl.querySelector('[data-stat-id="descripciones"] .db-stat-badge');
+      if (descBadge && d.porcentaje_descripciones !== undefined) descBadge.textContent = d.porcentaje_descripciones + '%';
+      const periodRow = container.querySelector('.db-id-row .key');
+      if (periodRow && periodRow.textContent.trim() === 'Período activo') {
+        const valEl = periodRow.closest('.db-id-row').querySelector('[data-row-val]');
+        if (valEl && d.periodo_actual) valEl.textContent = d.periodo_actual;
+      }
+    } else if (res?.error) {
+      console.error('[Dashboard] API error:', res.error);
     }
-  } catch { /* keep skeletons */ }
+  } catch (e) {
+    console.error('[Dashboard] hydrate exception:', e);
+  }
 
   // Notifications unread count
   try {
@@ -146,11 +163,11 @@ async function hydrate(container, statsEl) {
     updateStat(statsEl, 'notificaciones', 0);
   }
 
-  // Activity feed
+  // Activity feed — recent module access + logins
   try {
-    const res = await notifications.getAll({ all: 0 });
+    const res = await activity.getRecent();
     if (res?.success) {
-      const list = Array.isArray(res.data) ? res.data : (res.data?.items || res.data?.data || []);
+      const list = Array.isArray(res.data) ? res.data : [];
       hydrateActivity(container, list);
     } else {
       hydrateActivity(container, []);

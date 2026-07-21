@@ -49,6 +49,8 @@ class RegistroInasistenciasModule {
     this.inasistencias = [];
     this.individualHours = {};
     this.selectedMaterias = [];
+    this.customMotivos = [];
+    this.allMotivos = [...MOTIVOS];
 
     this.isLoading = false;
     this.showFieldErrors = false;
@@ -111,6 +113,7 @@ class RegistroInasistenciasModule {
       if (user && user.acceso_total !== 'S') {
         await this.loadTeacherMaterias();
       }
+      await this.loadCustomMotivos();
     } catch (error) {
       console.error('Error loading data:', error);
       showToast('Error cargando datos', 'error');
@@ -132,6 +135,31 @@ class RegistroInasistenciasModule {
     } catch {
       console.warn('No se pudieron cargar materias del docente');
     }
+  }
+
+  async loadCustomMotivos() {
+    try {
+      const res = await api.get('motivos/custom');
+      const list = res?.data || [];
+      this.customMotivos = list.map(m => ({
+        value: m.value,
+        label: m.label,
+        icon: m.icon || '+',
+        obligaHoras: m.obligaHoras,
+        _id: m.id,
+        _custom: true,
+      }));
+      this.allMotivos = [...MOTIVOS];
+      const ignIndex = this.allMotivos.findIndex(m => m.value === 'Ignorar');
+      if (ignIndex >= 0) {
+        this.allMotivos.splice(ignIndex, 0, ...this.customMotivos);
+      } else {
+        this.allMotivos.push(...this.customMotivos);
+      }
+    } catch {
+      this.allMotivos = [...MOTIVOS];
+    }
+    if (this._loaded) this.renderEstudiantes();
   }
 
   getDocenteNumber(docente) {
@@ -330,7 +358,7 @@ class RegistroInasistenciasModule {
       const studentInas = this.inasistencias.filter(i => String(i.estudiante_id) === estudianteId);
       const hasAny = studentInas.length > 0;
       const hasObliga = studentInas.some(i => {
-        const m = MOTIVOS.find(mot => mot.value === i.motivo);
+        const m = this.allMotivos.find(mot => mot.value === i.motivo);
         return m && m.obligaHoras;
       });
 
@@ -349,7 +377,7 @@ class RegistroInasistenciasModule {
       if (hasAny) {
         html += `<div class="flex flex-wrap gap-1.5">`;
         studentInas.forEach(inas => {
-          const m = MOTIVOS.find(mot => mot.value === inas.motivo);
+          const m = this.allMotivos.find(mot => mot.value === inas.motivo);
           if (m) {
             const bgColors = {
               'Sin excusa': 'bg-red-50 border-red-200 text-red-700',
@@ -374,7 +402,7 @@ class RegistroInasistenciasModule {
               <option value="">Añadir motivo...</option>
               <option value="Ignorar">Limpiar todo</option>`;
 
-      MOTIVOS.forEach(m => {
+      this.allMotivos.forEach(m => {
         const isSelected = studentInas.some(i => i.motivo === m.value);
         html += `<option value="${escapeHtml(m.value)}"${isSelected ? ' disabled' : ''}>${m.icon} ${m.label}${isSelected ? ' ✓' : ''}</option>`;
       });
@@ -417,7 +445,7 @@ class RegistroInasistenciasModule {
       return;
     }
 
-    const selectedMotivo = MOTIVOS.find(m => m.value === motivoValue);
+    const selectedMotivo = this.allMotivos.find(m => m.value === motivoValue);
     if (!selectedMotivo) return;
 
     let hourToUse = this.individualHours[estudianteId] || this.formData.horas;
@@ -429,7 +457,7 @@ class RegistroInasistenciasModule {
       }
       this.inasistencias = this.inasistencias.filter(i => {
         if (String(i.estudiante_id) !== estudianteId) return true;
-        const m = MOTIVOS.find(mot => mot.value === i.motivo);
+        const m = this.allMotivos.find(mot => mot.value === i.motivo);
         return m && !m.obligaHoras;
       });
     }
@@ -454,7 +482,7 @@ class RegistroInasistenciasModule {
     this.individualHours[estudianteId] = horas;
     this.inasistencias = this.inasistencias.map(i => {
       if (String(i.estudiante_id) === estudianteId) {
-        const m = MOTIVOS.find(mot => mot.value === i.motivo);
+        const m = this.allMotivos.find(mot => mot.value === i.motivo);
         if (m && m.obligaHoras) return { ...i, horas };
       }
       return i;
@@ -558,7 +586,7 @@ class RegistroInasistenciasModule {
       if (Object.keys(motivoCounts).length > 0) {
         resumenHtml += `<div class="mt-1"><strong>Motivos:</strong><br>`;
         Object.entries(motivoCounts).forEach(([mot, cnt]) => {
-          const motivoLabel = (MOTIVOS.find(m => m.value === mot)?.label) || mot;
+          const motivoLabel = (this.allMotivos.find(m => m.value === mot)?.label) || mot;
           resumenHtml += `<span class="inline-block mr-2">${escapeHtml(motivoLabel)}: ${cnt}</span><br>`;
         });
         resumenHtml += `</div>`;
@@ -732,8 +760,13 @@ class RegistroInasistenciasModule {
 
               <!-- Counter -->
               <div class="flex items-center justify-between pt-3 sm:pt-4 border-t border-gray-100">
-                <div class="text-sm text-gray-500">
-                  Inasistencias marcadas: <strong class="text-[#543391]" id="riCount">0</strong>
+                <div class="flex items-center gap-3">
+                  <span class="text-sm text-gray-500">
+                    Inasistencias marcadas: <strong class="text-[#543391]" id="riCount">0</strong>
+                  </span>
+                  <button type="button" id="riManageMotivosBtn" class="text-xs font-medium text-white bg-[#543391] hover:bg-[#432a75] transition-colors px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> Crear motivo
+                  </button>
                 </div>
               </div>
             </form>
@@ -852,6 +885,21 @@ class RegistroInasistenciasModule {
       this.handleRemoveMotivo(e.target.dataset.estudiante, e.target.dataset.motivo);
     });
 
+    // Gestionar motivos
+    delegate(form, 'click', '#riManageMotivosBtn', e => {
+      e.preventDefault();
+      this.openMotivoManager();
+    });
+
+    // Delete custom motivo (from SweetAlert modal)
+    delegate(document, 'click', '.ri-del-custom-motivo', e => {
+      const btn = e.target.closest('.ri-del-custom-motivo');
+      if (!btn) return;
+      const id = parseInt(btn.dataset.id, 10);
+      const label = btn.dataset.label || '';
+      if (id) this.handleDeleteCustomMotivo(id, label);
+    });
+
     // Individual hour
     delegate(form, 'change', '.ri-hora-individual', e => {
       this.handleIndividualHourChange(e.target.dataset.estudiante, e.target.value);
@@ -898,6 +946,144 @@ class RegistroInasistenciasModule {
       e.preventDefault();
       this.handleSubmit();
     });
+  }
+
+  async openMotivoManager() {
+    const custom = this.customMotivos;
+    let listHtml = '';
+    if (custom.length === 0) {
+      listHtml = '<p class="text-sm text-gray-400">No has creado motivos personalizados.</p>';
+    } else {
+      listHtml = '<div class="space-y-2">';
+      custom.forEach(m => {
+        listHtml += `<div class="flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200">
+          <div class="flex items-center gap-2 text-sm">
+            <span>${m.icon}</span>
+            <span>${escapeHtml(m.label)}</span>
+            <span class="text-xs px-2 py-0.5 rounded-full ${m.obligaHoras ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-500'}">${m.obligaHoras ? 'Requiere horas' : 'Horas 0'}</span>
+          </div>
+          <button type="button" class="ri-del-custom-motivo text-red-400 hover:text-red-600 transition-colors text-lg leading-none" data-id="${m._id}" data-label="${escapeHtml(m.label)}">&times;</button>
+        </div>`;
+      });
+      listHtml += '</div>';
+    }
+
+    const { value: action } = await Swal.fire({
+      title: 'Gestionar motivos personalizados',
+      html: `
+        <div class="text-left text-sm mb-4">
+          <p class="text-gray-500 mb-3">Crea motivos adicionales para registrar inasistencias. Solo son visibles para ti.</p>
+          ${listHtml}
+        </div>`,
+      showCancelButton: true,
+      confirmButtonText: '+ Crear nuevo',
+      cancelButtonText: 'Cerrar',
+      confirmButtonColor: '#543391',
+      reverseButtons: true,
+    });
+
+    if (action === true) {
+      await this.showCreateMotivoModal();
+    }
+  }
+
+  async showCreateMotivoModal() {
+    const { value: formValues, isConfirmed } = await Swal.fire({
+      title: 'Crear motivo personalizado',
+      html: `
+        <div class="text-left space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del motivo</label>
+            <input id="swal-input-motivo" class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none text-sm" placeholder="Ej: Salida anticipada">
+          </div>
+          <div class="flex items-center gap-2">
+            <input id="swal-input-obligahoras" type="checkbox" class="w-4 h-4 rounded text-[#543391] focus:ring-[#543391]">
+            <label for="swal-input-obligahoras" class="text-sm text-gray-700">Requiere registro de horas</label>
+          </div>
+        </div>`,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'Guardar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#543391',
+      preConfirm: () => {
+        const label = document.getElementById('swal-input-motivo').value.trim();
+        if (!label) {
+          Swal.showValidationMessage('El nombre del motivo es requerido');
+          return false;
+        }
+        const obligaHoras = document.getElementById('swal-input-obligahoras').checked;
+        return { label, obligaHoras };
+      },
+    });
+
+    if (isConfirmed && formValues) {
+      try {
+        const res = await api.post('motivos/custom/create', {
+          label: formValues.label,
+          obligaHoras: formValues.obligaHoras,
+        });
+        if (res.success !== false) {
+          await this.loadCustomMotivos();
+          await Swal.fire({
+            icon: 'success',
+            title: 'Motivo creado',
+            text: `"${formValues.label}" se ha agregado a tus motivos`,
+            timer: 2000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            position: 'top-end',
+            toast: true,
+          });
+        } else {
+          throw new Error(res.error || 'Error al crear');
+        }
+      } catch (err) {
+        await Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: err.message || 'No se pudo crear el motivo',
+          confirmButtonColor: '#543391',
+        });
+      }
+    }
+  }
+
+  async handleDeleteCustomMotivo(id, label) {
+    const { isConfirmed } = await Swal.fire({
+      icon: 'warning',
+      title: '¿Eliminar motivo?',
+      text: `"${label}" se eliminará permanentemente.`,
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#dc2626',
+    });
+    if (!isConfirmed) return;
+
+    try {
+      const res = await api.post('motivos/custom/delete', { id });
+      if (res.success !== false) {
+        await this.loadCustomMotivos();
+        await Swal.fire({
+          icon: 'success',
+          title: 'Eliminado',
+          text: `"${label}" ha sido eliminado`,
+          timer: 2000,
+          timerProgressBar: true,
+          showConfirmButton: false,
+          position: 'top-end',
+          toast: true,
+        });
+      }
+    } catch (err) {
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo eliminar el motivo',
+        confirmButtonColor: '#543391',
+      });
+    }
   }
 }
 

@@ -1,11 +1,12 @@
 import { delegate } from '../utils/dom.js';
 import { notifications } from '../services/notifications.js';
+import { activity } from '../services/activity.js';
 import { auth } from '../services/auth.js';
 
 const SECTIONS = [
   { id: 'dashboard',        label: 'Dashboard',         icon: 'bi-speedometer2',     sectionId: 'seccionDashboard' },
-  { id: 'informes',         label: 'Informes',          icon: 'bi-file-earmark-text', sectionId: 'seccionInformes' },
-  { id: 'descargas',        label: 'Descargas',         icon: 'bi-download',          sectionId: 'seccionDescargas' },
+  { id: 'informes',         label: 'Informes',          icon: 'bi-file-earmark-text', sectionId: 'seccionInformes', maestra: true },
+  { id: 'descargas',        label: 'Descargas',         icon: 'bi-download',          sectionId: 'seccionDescargas', maestra: true },
   { id: 'descripciones',    label: 'Descripciones',     icon: 'bi-card-text',         sectionId: 'seccionDescripciones' },
   { id: 'puestos',          label: 'Puestos',           icon: 'bi-trophy',            sectionId: 'seccionPuestos' },
   { id: 'divider1',                                                            divider: true },
@@ -17,7 +18,7 @@ const SECTIONS = [
     { id: 'seccionConsolidadoInasistencias', label: 'Consolidado Inasistencias' },
   ]},
   { id: 'divider2',                                                            divider: true },
-  { id: 'administrativo',   label: 'Admin.',            icon: 'bi-gear', sub: [
+  { id: 'administrativo',   label: 'Admin.',            icon: 'bi-gear', maestra: true, sub: [
     { id: 'seccionControlEstudiantes',    label: 'Estudiantes' },
     { id: 'seccionAsignaciones',          label: 'Asignación Asig.', maestra: true },
     { id: 'seccionSubirNotas',            label: 'Subir Notas' },
@@ -32,13 +33,13 @@ const SECTIONS = [
   ]},
   { id: 'divider3',                                                            divider: true },
   { id: 'estadisticas',     label: 'Estadísticas',      icon: 'bi-bar-chart',         sectionId: 'seccionEstadisticas' },
-  { id: 'docentes',         label: 'Docentes',          icon: 'bi-person-badge',      sectionId: 'seccionDocentes' },
+  { id: 'docentes',         label: 'Docentes',          icon: 'bi-person-badge', maestra: true, sectionId: 'seccionDocentes' },
   { id: 'notas',            label: 'Notas',             icon: 'bi-journal-text', sub: [
     { id: 'seccionNotas',               label: 'Registrar Notas' },
     { id: 'seccionConcentradorNotas',   label: 'Concentrador Académico' },
   ]},
   { id: 'divider4',                                                            divider: true },
-  { id: 'certificados',     label: 'Certificados',      icon: 'bi-award', sub: [
+  { id: 'certificados',     label: 'Certificados',      icon: 'bi-award', maestra: true, sub: [
     { id: 'seccionCertificados',        label: 'Generar Certificados' },
   ]},
   { id: 'convivencia',      label: 'Convivencia',       icon: 'bi-people', sub: [
@@ -52,6 +53,22 @@ const SECTIONS = [
 
 let currentSection = 'dashboard';
 let notificationCount = 0;
+
+function buildLabelMap() {
+  const map = {};
+  for (const s of SECTIONS) {
+    if (s.divider) continue;
+    const sectionId = s.sectionId || s.id;
+    map[sectionId] = s.label;
+    if (s.sub) {
+      for (const sub of s.sub) {
+        map[sub.id] = sub.label;
+      }
+    }
+  }
+  return map;
+}
+const LABEL_MAP = buildLabelMap();
 
 function navigateTo(sectionId) {
   document.querySelectorAll('.content-section').forEach((el) => {
@@ -73,6 +90,9 @@ function navigateTo(sectionId) {
     const backdrop = document.getElementById('sidebar-backdrop');
     if (backdrop) backdrop.remove();
   }
+  // Log module access (fire-and-forget)
+  const label = LABEL_MAP[sectionId] || sectionId;
+  activity.logModuleAccess(sectionId, label).catch(() => {});
 }
 
 function renderUserProfile() {

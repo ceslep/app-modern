@@ -12,6 +12,32 @@ import { initIconSelect } from './components/icon-select.js';
 import { initDevSwitcher, refreshDevSwitcher } from './components/dev-switcher.js';
 import { auth } from '@services/auth.js';
 import { api } from '@services/api.js';
+import { devTagSections } from '@utils/devLabel.js';
+
+// Dev-only: badge each section container with its source module (Alt+D toggles).
+const DEV_SECTION_MAP = {
+  seccionDashboard:                 'modules/dashboard/index.js',
+  seccionInformes:                  'modules/informes.js',
+  seccionDescargas:                 'modules/explorador.js',
+  seccionDescripciones:             'modules/descripciones.js',
+  seccionPuestos:                   'modules/puestos.js',
+  seccionRegistroInasistencias:     'modules/registroInasistencias.js',
+  seccionInasistencias:             'modules/inasistencias.js',
+  seccionControlInasistencias:      'modules/control_asistencia.js',
+  seccionConsolidadoInasistencias:  'modules/consolidadoInasistencias.js',
+  seccionControlEstudiantes:        'modules/control_estudiantes.js',
+  seccionAsignaciones:              'modules/asignaciones.js',
+  seccionAdministracion:            'modules/administrativo.js',
+  seccionEstadisticas:              'modules/estadisticas.js',
+  seccionNotas:                     'modules/notas.js',
+  seccionConcentradorNotas:         'modules/concentrador.js',
+  seccionCertificados:              'modules/certificados.js',
+  seccionConvivencia:               'modules/convivencia.js',
+  seccionNotificaciones:            'modules/notificaciones.js',
+  // Persistent chrome components
+  sidebar:                          'components/sidebar.js',
+  navbar:                           'components/navbar.js',
+};
 
 // Session observer — detects expired sessions and shows cause
 import './services/sessionObserver.js';
@@ -242,6 +268,8 @@ async function init() {
   window.onhashchange = function () {
     window.location.hash = 'no-back-button';
   };
+
+  devTagSections(DEV_SECTION_MAP);
 
   console.log('Aplicación inicializada correctamente');
 }

@@ -627,19 +627,20 @@ HTML;
         $mpdf->WriteHTML($html);
 
         // Save PDF
+        // Estructura: pdfs/{year}/{nombre_sede}/{nivel}-{numero}/{periodo}/{nombres}-{estudiante}.pdf
         $pdfDir = __DIR__ . '/pdfs';
         if (!is_dir($pdfDir)) mkdir($pdfDir, 0755, true);
-        $pdfFolder = $pdfDir . '/' . $sedeFolder;
+        $pdfFolder = $pdfDir . '/' . $year_input . '/' . $sedeFolder;
         if ($createFolder === 'S' && !is_dir($pdfFolder)) mkdir($pdfFolder, 0755, true);
 
         if ($createFolder === 'S') {
-            $pdfSubDir = $pdfFolder . '/' . $nivel . '-' . $numero;
+            $pdfSubDir = $pdfFolder . '/' . $nivel . '-' . $numero . '/' . $periodo_input;
             if (!is_dir($pdfSubDir)) mkdir($pdfSubDir, 0755, true);
             $pdfPath = $pdfSubDir . '/' . $nombres . '-' . $estudiante . '.pdf';
-            $relativePath = 'pdfs/' . $sedeFolder . '/' . $nivel . '-' . $numero . '/' . $nombres . '-' . $estudiante;
+            $relativePath = 'server/legacy/pdfs/' . $year_input . '/' . $sedeFolder . '/' . $nivel . '-' . $numero . '/' . $periodo_input . '/' . $nombres . '-' . $estudiante;
         } else {
             $pdfPath = $pdfDir . '/' . $nombres . '-' . $estudiante . '.pdf';
-            $relativePath = 'pdfs/' . $nombres . '-' . $estudiante;
+            $relativePath = 'server/legacy/pdfs/' . $nombres . '-' . $estudiante;
         }
 
         if (file_exists($pdfPath)) unlink($pdfPath);
@@ -655,7 +656,7 @@ HTML;
     echo json_encode([
         'estado'   => 'ok',
         'href'     => $relativePath . '.pdf',
-        'folder'   => ($createFolder === 'S' ? $sedeFolder . '/' . $nivel . '-' . $numero : ''),
+        'folder'   => ($createFolder === 'S' ? 'server/legacy/pdfs/' . $year_input . '/' . $sedeFolder . '/' . $nivel . '-' . $numero . '/' . $periodo_input : ''),
         'filename' => $relativePath,
         'datoss'   => $datoss,
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
