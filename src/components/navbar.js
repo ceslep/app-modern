@@ -87,7 +87,7 @@ function renderNavbar() {
           <i class="bi bi-list text-xl"></i>
         </button>
         <a href="#" class="flex items-center gap-2.5">
-          <img src="uescudo.png" alt="" class="h-8 w-auto">
+          <img src="escudohd.png" alt="" class="h-10 w-auto">
           <span class="font-bold text-gray-800 text-base hidden sm:inline">IEdeOccidente</span>
         </a>
       </div>

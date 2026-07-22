@@ -99,6 +99,7 @@ $routeMap = [
   'puestos/group-student'   => 'generaPuestosGrupo2.php',
 
   // Reports
+  'matriculaReport/pdf'     => 'matriculaReport.php',
   'reports/grades'          => 'generaReporte.php',
   'reports/report-card'     => 'generaReporte.php',
   'reports/report-pdf'     => 'generaReportePDF.php',

@@ -713,7 +713,6 @@ class ControlEstudiantesModule {
       </button>
       </div>
     </div>
-  </div>
 </div>`;
   }
 
@@ -1207,7 +1206,7 @@ class ControlEstudiantesModule {
             </button>
           </td>
           <td class="text-center px-1 py-3">
-            <button class="fluent-btn-printcode w-8 h-8 rounded-lg bg-gray-600/10 hover:bg-gray-600 text-gray-700 hover:text-white flex items-center justify-center transition-all shadow-sm hover:shadow-md" data-codigo="${escapeHtml(s.codigo || '')}" title="Imprimir código QR">
+            <button class="fluent-btn-printcode w-8 h-8 rounded-lg bg-gray-600/10 hover:bg-gray-600 text-gray-700 hover:text-white flex items-center justify-center transition-all shadow-sm hover:shadow-md" data-student='${escapeHtml(JSON.stringify(s))}' title="Imprimir datos del estudiante">
               <i class="bi bi-printer text-sm"></i>
             </button>
           </td>
@@ -1440,21 +1439,32 @@ class ControlEstudiantesModule {
     }
   }
 
-  _onPrintCode(codigo) {
-    if (!codigo) {
-      alertWarning('Código no disponible', 'El estudiante no tiene un código asignado.');
+  _printStudentReport(student) {
+    if (!student || !student.codigo) {
+      alertWarning('Datos no disponibles', 'No se pudieron obtener los datos del estudiante.');
       return;
     }
 
-    const label = $('codigoStudentLabel');
-    if (label) label.textContent = `Código: ${codigo}`;
+    const pdfUrl = `/app-modern/server/router.php?__api=matriculaReport/pdf&codigo=${encodeURIComponent(student.codigo)}&year=${encodeURIComponent(student.year || '')}`;
 
-    const iframe = $('ifrmprtcodigo');
-    if (iframe) {
-      iframe.src = `https://ceslep.github.io/matriculaReport/?codigo=${encodeURIComponent(codigo)}`;
+    let modal = document.getElementById('modalStudentPdf');
+    if (!modal) {
+      const container = document.getElementById('modal-container');
+      if (!container) return;
+      container.insertAdjacentHTML('beforeend', this._pdfViewerModalHTML());
     }
 
-    showModal('modalPrtCodigos');
+    const pdfFrame = document.getElementById('ifrmStudentPdf');
+    const loadingOverlay = document.getElementById('pdfLoadingOverlay');
+    if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+    if (pdfFrame) {
+      pdfFrame.onload = () => {
+        if (loadingOverlay) loadingOverlay.classList.add('hidden');
+      };
+      pdfFrame.src = pdfUrl;
+    }
+
+    showModal('modalStudentPdf');
   }
 
   /* ──────────────────────────────────────────────────────────────── */
@@ -1653,8 +1663,8 @@ class ControlEstudiantesModule {
 
     // ── Print code button ──
     delegate(section, 'click', '.fluent-btn-printcode', (e, target) => {
-      const codigo = target.dataset.codigo;
-      this._onPrintCode(codigo);
+      const student = JSON.parse(target.dataset.student);
+      this._printStudentReport(student);
     });
 
     // ── Tab switching in edit modal ──
@@ -1761,7 +1771,45 @@ class ControlEstudiantesModule {
       }
     });
   }
+  _pdfViewerModalHTML() {
+    return `
+<div id="modalStudentPdf" class="modal fixed inset-0 z-[1056] flex items-center justify-center hidden p-3 sm:p-6">
+  <div class="relative z-[1060] w-full max-w-5xl bg-white rounded-3xl shadow-2xl h-[90vh] flex flex-col overflow-hidden">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100" style="background: linear-gradient(135deg, #323130 0%, #201f1e 100%);">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center text-white">
+          <i class="bi bi-filetype-pdf text-sm"></i>
+        </div>
+        <div>
+          <h5 class="text-base font-semibold text-white">Informe del Estudiante</h5>
+          <p class="text-xs text-white/70">Registro de Matrícula</p>
+        </div>
+      </div>
+      <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all" data-modal-dismiss="modalStudentPdf">
+        <i class="bi bi-x-lg text-sm"></i>
+      </button>
+    </div>
+    <div class="flex-1 bg-gray-100 p-4 min-h-0 relative">
+      <div id="pdfLoadingOverlay" class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-xl z-10">
+        <div class="text-center">
+          <div class="w-10 h-10 border-4 border-[#543391] border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p class="text-sm text-gray-500 mt-3">Cargando PDF...</p>
+        </div>
+      </div>
+      <iframe id="ifrmStudentPdf" class="w-full h-full rounded-xl bg-white shadow-inner" style="border:none;"></iframe>
+    </div>
+    <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl">
+      <button type="button" data-modal-dismiss="modalStudentPdf"
+              class="px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>`;
+  }
+
 }
+
 
 // Instantiate on import
 new ControlEstudiantesModule();

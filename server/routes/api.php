@@ -230,6 +230,181 @@ switch ($resource) {
         };
         break;
 
+    case 'matriculaReport':
+        requireAuth();
+        // Get parameters
+        $codigo = getQueryParam('codigo');
+        $year = getQueryParam('year') ?? (int)date('Y');
+
+        // Database connection
+        $db = Database::getInstance()->getPdo();
+
+        // Fetch student data
+        $stmt = $db->prepare("
+            SELECT
+                e.ind,
+                e.estudiante,
+                e.nombres,
+                '' as apellidos,  -- Assuming apellidos is not stored separately, using empty string
+                e.codigo,
+                e.genero,
+                e.fecnac,
+                e.edad,
+                e.nivel,
+                e.numero,
+                e.grado,
+                e.acudiente,
+                e.telefono1,
+                e.telefono2,
+                e.direccion,
+                e.email_estudiante as correo,
+                COALESCE(e.telefono1, e.telefono2) as telefono,
+                e.eps,
+                e.estado,
+                e.establecimiento,
+                e.asignacion,
+                'S' as etica  -- Placeholder for ética, adjust as needed based on actual data source
+            FROM estugrupos e
+            WHERE e.codigo = ? AND e.anio = ?
+            LIMIT 1
+        ");
+        $stmt->execute([$codigo, $year]);
+        $student = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$student) {
+            header('Content-Type: application/json; charset=utf-8');
+            http_response_code(404);
+            echo json_encode(['error' => 'Student not found']);
+            exit;
+        }
+
+        // Extract student data
+        $estudiante_id = $student['estudiante'];
+        $nombres = $student['nombres'];
+        $apellidos = $student['apellidos'];
+        $codigo = $student['codigo'];
+        $nivel = $student['nivel'];
+        $numero = $student['numero'];
+        $asignacion = $student['asignacion'] ?? '';
+        $year = $year; // already set
+        $periodo = ''; // Not available in student data, leaving empty
+        $establecimiento = $student['establecimiento'] ?? '';
+        $createFolder = 'N'; // Not creating folders, outputting directly
+
+        // Helper functions (copied from legacy scripts)
+        function get_valoracion($v, PDO $db, string $year): string {
+            if (empty($v)) return '';
+            $stmt = $db->prepare('SELECT valoracion FROM escalas_1290 WHERE ? BETWEEN inicio AND fin AND year = ? LIMIT 1');
+            $stmt->execute([(float)$v, $year]);
+            return (string)($stmt->fetchColumn() ?: '');
+        }
+
+        function get_descripcion(string $HED, string $grado, string $asignatura, string $periodo, string $desempeno, PDO $db, string $year): string {
+            if (empty($desempeno)) return '';
+            $stmt = $db->prepare("
+                SELECT descripcion FROM KonzernHED WHERE HED = ? AND grado = ? AND asignatura = ? AND periodo = ? AND desempeño = ? AND year = ?
+            ");
+            $stmt->execute([$HED, $grado, $asignatura, $periodo, $desempeno, $year]);
+            $result = $stmt->fetchColumn();
+            return $result ?: '';
+        }
+
+        function get_porcentaje(string $nivel, string $asignatura, PDO $db, string $year, string $asignacion): string {
+            $stmt = $db->prepare("
+                SELECT porcentaje FROM parametros_informe WHERE nivel = ? AND codigo_materia = ? AND año = ? AND asignacion = ?
+            ");
+            $stmt->execute([$nivel, $asignatura, $year, $asignacion]);
+            $result = $stmt->fetchColumn();
+            return $result ?: '0';
+        }
+
+        function get_inasistencia(string $estudiante, string $asignatura, PDO $db, string $year): string {
+            $stmt = $db->prepare("
+                SELECT COUNT(*) FROM inasistencia WHERE estudiante = ? AND asignatura = ? AND year = ?
+            ");
+            $stmt->execute([$estudiante, $asignatura, $year]);
+            return (string)$stmt->fetchColumn();
+        }
+
+        // Function to get icon based on gender (simplified)
+        function get_genero_icon($genero) {
+            return strtolower($genero) === 'f' ? '♀️' : '♂️';
+        }
+
+        // Load PhpSpreadsheet
+        $autoloadPaths = [
+            __DIR__ . '/../../vendor/autoload.php',
+            __DIR__ . '/vendor/autoload.php',
+            __DIR__ . '/../vendor/autoload.php',
+            __DIR__ . '/../legacy/vendor/autoload.php',
+        ];
+        $loaded = false;
+        foreach ($autoloadPaths as $p) {
+            if (file_exists($p)) { require $p; $loaded = true; break; }
+        }
+        if (!$loaded) {
+            http_response_code(500);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['error' => 'PhpSpreadsheet autoload not found']);
+            exit;
+        }
+
+        // Create new spreadsheet
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Set document properties
+        $spreadsheet->getProperties()->setCreator('Sistema de Gestión Académica')
+            ->setLastModifiedBy('Sistema de Gestión Académica')
+            ->setTitle('Informe de Matrícula')
+            ->setSubject('Informe de Matrícula')
+            ->setDescription('Informe de matrícula para estudiante')
+            ->setKeywords('matrícula informe')
+            ->setCategory('informe');
+
+        // Set up the Excel-like structure for the report (simplified version)
+        // We'll create a simple table with student data
+
+        // Header
+        $sheet->setCellValue('A1', 'INFORME DE MATRÍCULA');
+        $sheet->getStyle('A1')->getFont()->setSize(16)->setBold(true);
+        $sheet->mergeCells('A1:D1');
+
+        // Student data
+        $sheet->setCellValue('A3', 'Código:');
+        $sheet->setCellValue('B3', $codigo);
+        $sheet->setCellValue('A4', 'Nombre:');
+        $sheet->setCellValue('B4', $nombres . ' ' . $apellidos);
+        $sheet->setCellValue('A5', 'Identificación:');
+        $sheet->setCellValue('B5', $estudiante_id);
+        $sheet->setCellValue('A6', 'Sede:');
+        $sheet->setCellValue('B6', $establecimiento);
+        $sheet->setCellValue('A7', 'Grado:');
+        $sheet->setCellValue('B7', $nivel . '-' . $numero);
+        $sheet->setCellValue('A8', 'Correo:');
+        $sheet->setCellValue('B8', $correo);
+        $sheet->setCellValue('A9', 'Teléfono:');
+        $sheet->setCellValue('B9', $telefono);
+
+        // Add QR code placeholder (we'll use an image or just text for now)
+        $sheet->setCellValue('A12', 'Código QR:');
+        $sheet->setCellValue('B12', '[QR Code for ' . $codigo . ']');
+
+        // Set column widths
+        $sheet->getColumnDimension('A')->setWidth(20);
+        $sheet->getColumnDimension('B')->setWidth(30);
+
+        // Style headers
+        $sheet->getStyle('A3:A9')->getFont()->setBold(true);
+
+        // Output PDF directly
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="reporte_' . $codigo . '.pdf"');
+
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Pdf');
+        $writer->save('php://output');
+        exit;
+
     case 'periods':
         $periods = Database::getInstance()->fetchAll(
             "SELECT nombre AS value, nombre AS label,

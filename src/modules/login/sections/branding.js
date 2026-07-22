@@ -18,7 +18,7 @@ export function renderBranding() {
   pane.innerHTML = `
     <div class="lg-brand-inner">
       <div class="lg-brand-eyebrow">Sistema Académico</div>
-      <img src="uescudo.png" alt="Escudo I.E. de Occidente" class="lg-brand-escudo" />
+      <img src="escudohd.png" alt="Escudo I.E. de Occidente" class="lg-brand-escudo" style="width:150px;height:auto;margin-bottom:1rem;" />
       <h1 class="lg-brand-title">I.E. de Occidente</h1>
       <div class="lg-brand-rule"></div>
       <p class="lg-brand-tagline">${TAGLINE}</p>

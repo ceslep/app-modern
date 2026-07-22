@@ -6,7 +6,7 @@
     <meta name="description" content="Sistema de Gestion Academica - I.E. de Occidente">
     <meta name="theme-color" content="#543391">
     <title>I.E. de Occidente - Sistema Academico</title>
-    <link rel="icon" type="image/png" href="./uescudo.png">
+    <link rel="icon" type="image/png" href="./escudohd.png">
     <link rel="apple-touch-icon" href="./apple-touch-icon.png">
     <link rel="manifest" href="./manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,13 +24,79 @@
       #boot-loader img { width: 72px; height: 72px; opacity: 0.5; margin-bottom: 1rem; }
       #boot-loader .sp { width: 24px; height: 24px; border: 3px solid #e0e0e0; border-top-color: #543391; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
       @keyframes spin { to { transform: rotate(360deg); } }
+
+      /* Login screen modern enhancements */
+      body #login-page .lg-pane-brand {
+        background: linear-gradient(135deg, #543391, #6f4ab3) !important;
+        padding: 2rem !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+        text-align: center !important;
+      }
+      body #login-page .lg-pane-form {
+        background: rgba(255,255,255,0.9) !important;
+        backdrop-filter: blur(10px) !important;
+        border-radius: 16px !important;
+        padding: 2rem !important;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+      }
+      body #login-page .lg-input {
+        border: none !important;
+        border-bottom: 2px solid #ddd !important;
+        transition: border-color 0.3s !important;
+        background: transparent !important;
+      }
+      body #login-page .lg-input:focus {
+        border-color: #543391 !important;
+        outline: none !important;
+        background: rgba(255,255,255,0.8) !important;
+      }
+      body #login-page .lg-submit {
+        background: linear-gradient(135deg, #543391, #6f4ab3) !important;
+        color: white !important;
+        border: none !important;
+        padding: 0.75rem 1.5rem !important;
+        border-radius: 30px !important;
+        font-weight: 600 !important;
+        transition: transform 0.2s !important;
+      }
+      body #login-page .lg-submit:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 12px rgba(84,51,145,0.4) !important;
+      }
+      body #login-page .lg-label {
+        color: #543391 !important;
+        font-weight: 500 !important;
+      }
+      body #login-page .lg-field-icon {
+        color: #543391 !important;
+      }
+      /* Logo pulse animation */
+      @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+      }
+      body #login-page .logo {
+        animation: pulse 3s infinite;
+        display: block !important;
+        margin: 0 auto !important;
+        width: 100px !important;
+        height: auto !important;
+      }
+      body #login-page .lg-brand-escudo {
+        width: 200px !important;
+        height: auto !important;
+        display: block !important;
+        margin: 0 auto !important;
+      }
     </style>
 </head>
 <body>
     <!-- Boot loader (hidden by JS when ready) -->
     <div id="boot-loader">
         <div>
-            <img src="uescudo.png" alt="">
+            <img src="escudohd.png" alt="">
             <div class="sp"></div>
         </div>
     </div>

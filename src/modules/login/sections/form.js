@@ -14,7 +14,7 @@ export function renderForm() {
     <div class="lg-card" data-form-card>
       <!-- Cabecera de marca (solo móvil) · decorativa: la marca la anuncia el panel/heading -->
       <header class="lg-head" aria-hidden="true">
-        <img src="uescudo.png" alt="" class="logo" />
+        <img src="escudohd.png" alt="" class="logo" style="width:80px;height:auto;" />
         <h1>I.E. de Occidente</h1>
         <p>Sistema Académico</p>
       </header>

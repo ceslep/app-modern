@@ -347,7 +347,7 @@ try {
     // fall back to the public logo if not found.
     $escudoPath = __DIR__ . '/escudo_colegio.jpeg';
     if (!file_exists($escudoPath)) {
-        $escudoPath = __DIR__ . '/../../public/uescudo.png';
+        $escudoPath = __DIR__ . '/../../public/escudohd.png';
         if (!file_exists($escudoPath)) $escudoPath = '';
     }
     $escudoImgHtml = '';
