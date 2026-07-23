@@ -119,4 +119,104 @@ class ConvivenciaController
         $stmt = $this->db->query("SELECT ind, itemConvivencia, tipo FROM itemsConvivencia ORDER BY ind");
         success($stmt->fetchAll());
     }
+
+    /**
+     * GET /convivencia/consolidation - Consolidated view by student
+     */
+    public function consolidation(): void
+    {
+        $asignacion = getQueryParam('asignacion');
+        $nivel = getQueryParam('nivel');
+        $numero = getQueryParam('numero');
+        $year = getQueryParam('year', date('Y'));
+        $estudiante = getQueryParam('estudiante');
+        $page = max(1, (int) getQueryParam('page', '1'));
+        $perPage = max(10, min(200, (int) getQueryParam('per_page', '50')));
+        $offset = ($page - 1) * $perPage;
+
+        $conditions = ["c.year = ?"];
+        $params = [$year];
+
+        if ($asignacion) {
+            $conditions[] = "g.asignacion = ?";
+            $params[] = $asignacion;
+        }
+        if ($nivel) {
+            $conditions[] = "g.nivel = ?";
+            $params[] = $nivel;
+        }
+        if ($numero) {
+            $conditions[] = "g.numero = ?";
+            $params[] = $numero;
+        }
+        if ($estudiante) {
+            $conditions[] = "(c.estudiante LIKE ? OR g.nombres LIKE ?)";
+            $likeEst = "%$estudiante%";
+            $params[] = $likeEst;
+            $params[] = $likeEst;
+        }
+
+        $where = implode(' AND ', $conditions);
+
+        // Total count
+        $countStmt = $this->db->prepare("
+            SELECT COUNT(DISTINCT c.estudiante)
+            FROM convivencia c
+            INNER JOIN estugrupos g ON c.estudiante = g.estudiante AND g.anio = c.year
+            WHERE $where
+        ");
+        $countStmt->execute($params);
+        $total = (int) $countStmt->fetchColumn();
+
+        // Per-student breakdown by tipoFalta
+        $stmt = $this->db->prepare("
+            SELECT
+                c.estudiante,
+                MAX(g.nombres) AS nombres,
+                CONCAT_WS('-', MAX(g.nivel), MAX(g.numero)) AS grupo,
+                MAX(g.nivel) AS nivel,
+                MAX(g.numero) AS numero,
+                '' AS sede,
+                SUM(CASE WHEN LOWER(c.tipoFalta) LIKE '%positivo%' THEN 1 ELSE 0 END) AS POSITIVO,
+                SUM(CASE WHEN LOWER(c.tipoFalta) LIKE '%tipo i%' OR LOWER(c.tipoFalta) = 'tipo1' THEN 1 ELSE 0 END) AS `TIPO I`,
+                SUM(CASE WHEN LOWER(c.tipoFalta) LIKE '%tipo ii%' OR LOWER(c.tipoFalta) = 'tipo2' THEN 1 ELSE 0 END) AS `TIPO II`,
+                SUM(CASE WHEN LOWER(c.tipoFalta) LIKE '%tipo iii%' OR LOWER(c.tipoFalta) = 'tipo3' THEN 1 ELSE 0 END) AS `TIPO III`,
+                COUNT(*) AS total
+            FROM convivencia c
+            INNER JOIN estugrupos g ON c.estudiante = g.estudiante AND g.anio = c.year
+            WHERE $where
+            GROUP BY c.estudiante
+            ORDER BY total DESC, g.nombres ASC
+            LIMIT $perPage OFFSET $offset
+        ");
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+
+        // Map sede names
+        $sedes = [];
+        if ($asignacion) {
+            $sedeStmt = $this->db->prepare("SELECT ind, sede FROM sedes WHERE ind = ?");
+            $sedeStmt->execute([$asignacion]);
+            $sedeRow = $sedeStmt->fetch();
+            if ($sedeRow) $sedes[$sedeRow['ind']] = $sedeRow['sede'];
+        }
+
+        $data = array_map(function ($r) use ($sedes) {
+            return [
+                'estudiante' => $r['estudiante'],
+                'nombres' => $r['nombres'],
+                'grupo' => $r['grupo'],
+                'nivel' => $r['nivel'],
+                'numero' => $r['numero'],
+                'sede' => $sedes[$r['sede']] ?? $r['sede'] ?? '',
+                'positivo' => (int) $r['POSITIVO'],
+                'tipo1' => (int) $r['TIPO I'],
+                'tipo2' => (int) $r['TIPO II'],
+                'tipo3' => (int) $r['TIPO III'],
+                'total' => (int) $r['total'],
+            ];
+        }, $rows);
+
+        paginated($data, $total, $page, $perPage);
+    }
 }

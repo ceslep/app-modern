@@ -35,16 +35,43 @@ try {
         if ($acceso > 0) $isMaestra = true;
     }
 
-    $periodoStmt = $db->prepare("SELECT nombre FROM periodos WHERE CURDATE() BETWEEN fechainicial AND fechafinal AND nombre <> 'MINIMAS' LIMIT 1");
+    $periodoStmt = $db->prepare("SELECT nombre, fechainicial, fechafinal FROM periodos WHERE CURDATE() BETWEEN fechainicial AND fechafinal AND nombre <> 'MINIMAS' LIMIT 1");
     $periodoStmt->execute();
-    $periodoActual = $periodoStmt->fetchColumn() ?: 'UNO';
+    $periodoRow = $periodoStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    $periodoActual = $periodoRow['nombre'] ?? 'UNO';
+
+    // Convivencia data may lag behind the current year. If there are no records
+    // for the current year, fall back to the most recent year that has data so
+    // the dashboard card is not misleadingly empty.
+    $convYear = $year;
+    if (queryCount($db, "SELECT COUNT(*) FROM convivencia WHERE year = ?", [$year]) === 0) {
+        try {
+            $maxConv = $db->query("SELECT MAX(year) FROM convivencia")->fetchColumn();
+            if ($maxConv) $convYear = (int) $maxConv;
+        } catch (Throwable) { /* keep current year */ }
+    }
+
+    // Convivencia has no `periodo` column — only `fecha`. Map the current
+    // period's month-day window onto the data year (`convYear`) so the card
+    // reflects the current period even when the data lags a year behind.
+    $convPeriodStart = null;
+    $convPeriodEnd = null;
+    if ($periodoRow && !empty($periodoRow['fechainicial']) && !empty($periodoRow['fechafinal'])) {
+        $mdStart = date('m-d', strtotime($periodoRow['fechainicial']));
+        $mdEnd   = date('m-d', strtotime($periodoRow['fechafinal']));
+        $convPeriodStart = "$convYear-$mdStart";
+        $convPeriodEnd   = "$convYear-$mdEnd";
+    }
+    // Build the convivencia WHERE fragment + params for the period window.
+    $convPeriodSql = ($convPeriodStart && $convPeriodEnd) ? " AND fecha BETWEEN ? AND ?" : "";
+    $convPeriodParams = ($convPeriodStart && $convPeriodEnd) ? [$convPeriodStart, $convPeriodEnd] : [];
 
     if ($isMaestra) {
         $totalEstudiantes   = queryCount($db, "SELECT COUNT(DISTINCT e.estudiante) FROM estugrupos e WHERE e.anio = ? AND e.activo = 'S'", [$year]);
         $totalAsignaturas   = queryCount($db, "SELECT COUNT(DISTINCT asignatura) FROM notas WHERE year = ? AND asignatura <> 'x'", [$year]);
         $totalValoraciones  = queryCount($db, "SELECT COUNT(*) FROM notas WHERE periodo = ? AND year = ? AND valoracion IS NOT NULL", [$periodoActual, $year]);
         $totalInasistencias = queryCount($db, "SELECT COUNT(*) FROM inasistencia WHERE year = ?", [$year]);
-        $totalConvivencia   = queryCount($db, "SELECT COUNT(*) FROM convivencia WHERE year = ?", [$year]);
+        $totalConvivencia   = queryCount($db, "SELECT COUNT(*) FROM convivencia WHERE year = ?$convPeriodSql", array_merge([$convYear], $convPeriodParams));
         $totalDescripciones = 0;
         foreach (['desempenos','desempenos2','desempenos3'] as $t) {
             $totalDescripciones += queryCount($db,
@@ -72,8 +99,8 @@ try {
             "SELECT COUNT(*) FROM inasistencia WHERE docente = ? AND year = ?",
             [$identificacion, $year]);
         $totalConvivencia   = queryCount($db,
-            "SELECT COUNT(*) FROM convivencia WHERE docente = ? AND year = ?",
-            [$identificacion, $year]);
+            "SELECT COUNT(*) FROM convivencia WHERE docente = ? AND year = ?$convPeriodSql",
+            array_merge([$identificacion, $convYear], $convPeriodParams));
         $totalDescripciones = 0;
         foreach (['desempenos','desempenos2','desempenos3'] as $t) {
             $totalDescripciones += queryCount($db,
@@ -97,6 +124,8 @@ try {
         "periodo_actual" => $periodoActual,
         "total_inasistencias" => $totalInasistencias,
         "total_convivencia" => $totalConvivencia,
+        "convivencia_year" => $convYear,
+        "convivencia_periodo" => $periodoActual,
         "total_descripciones" => $totalDescripciones,
         "porcentaje_descripciones" => $porcentajeDescripciones,
         "year" => $year,

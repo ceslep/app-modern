@@ -10,7 +10,9 @@ if ($mysqli->connect_error) {
 }
 $mysqli->set_charset('utf8');
 
-$datos = json_decode(file_get_contents('php://input'));
+$datos = json_decode(file_get_contents('php://input') ?: '{}');
+if (!$datos) $datos = (object) [];
+
 $estudiante = $datos->estudiante ?? '';
 $year = $datos->year ?? date('Y');
 
@@ -23,19 +25,26 @@ if (empty($estudiante)) {
 $sql = "
     SELECT
         c.ind,
-        eg.estudiante AS estudiante,
-        eg.nombres AS nombres,
+        c.estudiante,
+        eg.nombres,
         CONCAT_WS('-', eg.nivel, eg.numero) AS grupo,
         s.sede AS sede,
+        d.nombres AS docente,
         c.asignatura,
         c.fecha,
-        IF(c.hora<>'', c.hora, SUBSTRING(c.fechahora, 11, 8)) as hora,
-        IF(c.tipoFalta='POSITIVO', 'OTRA OBSERVACION', c.tipoFalta) as tipoFalta,
-        IF(c.firma<>'', '1', '0') as firmado,
-        c.firma
+        IF(c.hora<>'', c.hora, SUBSTRING(c.fechahora, 11, 8)) AS hora,
+        c.tipoFalta,
+        c.faltas,
+        c.descripcionSituacion,
+        c.descargosEstudiante,
+        c.positivos,
+        c.firma,
+        c.firmaAcudiente,
+        c.fechahora
     FROM convivencia c
     JOIN estugrupos eg ON c.estudiante = eg.estudiante
     JOIN sedes s ON eg.asignacion = s.ind
+    LEFT JOIN docentes d ON c.docente = d.identificacion
     WHERE c.estudiante = ?
       AND eg.year = ?
       AND YEAR(c.fechahora) = ?
@@ -48,7 +57,11 @@ if ($stmt) {
     $stmt->bind_param("sss", $estudiante, $year, $year);
     $stmt->execute();
     $result = $stmt->get_result();
-    echo json_encode($result->fetch_all(MYSQLI_ASSOC));
+    $rows = $result->fetch_all(MYSQLI_ASSOC);
+    foreach ($rows as &$row) {
+        $row['firmado'] = !empty($row['firma']) ? '1' : '0';
+    }
+    echo json_encode($rows);
     $stmt->close();
 } else {
     http_response_code(500);

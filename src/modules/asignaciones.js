@@ -11,7 +11,7 @@ import { asignaciones } from '@services/asignaciones.js';
 import { auth } from '@services/auth.js';
 import { escapeHtml, $, delegate, debounce } from '@utils/dom.js';
 import { alertSuccess, alertError, alertWarning, alertConfirm, showLoading, closeLoading } from '@utils/alert.js';
-import { showModal, hideModal } from '@utils/modal.js';
+import { showModal, hideModal, destroyModal } from '@utils/modal.js';
 
 class AsignacionesModule {
   constructor() {
@@ -158,14 +158,27 @@ class AsignacionesModule {
       </div>
 
       <div class="asig-toolbar">
+        <div class="asig-toolbar-buttons">
+          <button id="btnNuevaAsignacion" class="asig-btn-add">
+            <i class="bi bi-plus-lg"></i> Nueva Asignación
+          </button>
+          <button id="btnImportarAsig" class="asig-btn-import">
+            <i class="bi bi-file-excel"></i> Importar desde Excel
+          </button>
+        </div>
         <span class="asig-count" id="asigTotalCount">0 registros</span>
-        <button id="btnNuevaAsignacion" class="asig-btn-add">
-          <i class="bi bi-plus-lg"></i> Nueva Asignación
-        </button>
       </div>
 
       <div id="tablaAsignaciones" class="asig-table-wrap"></div>
     `;
+
+    // Create hidden file input for Excel import
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.id = 'fileInputAsig';
+    fileInput.accept = '.xlsx,.xls';
+    fileInput.style.display = 'none';
+    container.appendChild(fileInput);
   }
 
   /* ──────────────────────────────────────────────────────────────── */
@@ -223,6 +236,21 @@ class AsignacionesModule {
     // New asignacion button
     delegate($('seccionAsignaciones'), 'click', '#btnNuevaAsignacion', () => this.openCreateModal());
 
+    // Import asignacion button
+    delegate($('seccionAsignaciones'), 'click', '#btnImportarAsig', () => {
+      const fileInput = $('fileInputAsig');
+      if (fileInput) {
+        fileInput.click();
+      } else {
+        console.error('File input not found');
+      }
+    });
+
+    // File input change
+    delegate($('seccionAsignaciones'), 'change', '#fileInputAsig', (e) => {
+      this.importFromExcel(e.target.files[0]);
+    });
+
     // Edit button (delegated from table)
     delegate($('seccionAsignaciones'), 'click', '.btn-editar-asig', (e, target) => {
       const rowData = this.table ? this.table.getRowData(target.dataset.row) : null;
@@ -272,6 +300,108 @@ class AsignacionesModule {
     const searchField = $('filtroAsigAsignatura');
     if (searchField) searchField.value = '';
     this.applyFilters();
+  }
+
+  /*  Import from Excel  */
+  async importFromExcel(file) {
+    if (!file) {
+      alertError('Error', 'No se selecionó ningún archivo');
+      return;
+    }
+    if (!file.name.match(/\.(xlsx|xls)$/i)) {
+      alertError('Error', 'Por favor seleccione un archivo de Excel válido (.xlsx, .xls)');
+      return;
+    }
+
+    showLoading('Procesando archivo Excel...');
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const data = e.target.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+        if (jsonData.length === 0) {
+          closeLoading();
+          alertError('Error', 'El archivo Excel está vacío');
+          return;
+        }
+
+        // Assume first row is headers
+        const headers = jsonData[0];
+        const rows = jsonData.slice(1);
+
+        // Expected fields in the order they appear in the modal (but we'll map by header name)
+        const expectedFields = ['year', 'sede', 'docente', 'asignatura', 'materia', 'nivel', 'numero', 'abreviatura', 'codigo', 'banda', 'visible', 'orden', 'grados'];
+        const successes = [];
+        const errors = [];
+
+        for (const row of rows) {
+          const obj = {};
+          headers.forEach((header, index) => {
+            if (header) {
+              obj[header] = row[index];
+            }
+          });
+
+          // Convert numeric fields
+          obj.year = obj.year ? parseInt(obj.year) : new Date().getFullYear();
+          obj.sede = obj.sede ? parseInt(obj.sede) : 0;
+          obj.docente = obj.docente ? String(obj.docente).trim() : null;
+          if (obj.docente === '') obj.docente = null;
+
+          obj.nivel = obj.nivel ? parseInt(obj.nivel) : 0;
+          obj.numero = obj.numero ? parseInt(obj.numero) : 0;
+          obj.orden = obj.orden ? parseFloat(obj.orden) : 0;
+
+          // String fields: trim and convert empty to null or empty string as appropriate.
+          obj.asignatura = obj.asignatura ? String(obj.asignatura).trim() : '';
+          obj.materia = obj.materia ? String(obj.materia).trim() : '';
+          obj.abreviatura = obj.abreviatura ? String(obj.abreviatura).trim() : '';
+          obj.codigo = obj.codigo ? String(obj.codigo).trim() : '';
+          obj.banda = obj.banda ? String(obj.banda).trim() : '';
+          obj.visible = obj.visible ? String(obj.visible).trim().toUpperCase() : 'S';
+          obj.grados = obj.grados ? String(obj.grados).trim() : '';
+
+          // Validate required fields
+          if (!obj.asignatura) {
+            errors.push(`Falta asignatura en fila ${jsonData.indexOf(row) + 2}`); // row index in jsonData, plus 2 for header and 1-based
+            continue;
+          }
+
+          try {
+            const res = await asignaciones.create(obj);
+            if (res.success) {
+              successes.push(obj);
+            } else {
+              errors.push(`Error en fila ${jsonData.indexOf(row) + 2}: ${res.error}`);
+            }
+          } catch (err) {
+            errors.push(`Excepción en fila ${jsonData.indexOf(row) + 2}: ${err.message}`);
+          }
+        }
+
+        closeLoading();
+        if (errors.length === 0) {
+          alertSuccess(`Importación exitosa: ${successes.length} asignaciones creadas`);
+          this.loadData(); // refresh table
+        } else {
+          alertError(`Importación completada con errores: ${successes.length} exitosas, ${errors.length} fallidas\n${errors.join('\n')}`);
+          // Optionally refresh table to see what was added
+          this.loadData();
+        }
+      } catch (err) {
+        closeLoading();
+        alertError('Error al procesar el archivo', err.message);
+      }
+    };
+    reader.onerror = () => {
+      closeLoading();
+      alertError('Error', 'No se pudo leer el archivo');
+    };
+    reader.readAsBinaryString(file);
   }
 
   /* ──────────────────────────────────────────────────────────────── */
@@ -468,12 +598,23 @@ class AsignacionesModule {
       .asig-btn-clear:hover{ background:#f5f3ff; border-color:#c8bfda; color:#543391; }
       .asig-toolbar{ display:flex; align-items:center; justify-content:space-between;
         flex-wrap:wrap; gap:.5rem; margin-bottom:.6rem; }
+      .asig-toolbar-buttons{ display:flex; gap:.5rem; }
       .asig-count{ font-size:.78rem; color:#8f80a8; }
       .asig-btn-add{ display:inline-flex; align-items:center; gap:.4rem;
         padding:.45rem .85rem; font-size:.8rem; font-weight:600;
         color:#fff; background:#059669; border:none; border-radius:8px;
         cursor:pointer; transition:all .15s ease; }
       .asig-btn-add:hover{ background:#047857; }
+      /* Import button */
+      .asig-btn-import{
+        display:inline-flex; align-items:center; gap:.4rem;
+        padding:.45rem .85rem; font-size:.8rem; font-weight:600;
+        color:#fff; background:#543391; border:none; border-radius:8px;
+        cursor:pointer; transition:all .15s ease;
+      }
+      .asig-btn-import:hover{
+        background:#6f4ab3;
+      }
       .asig-table-wrap{ background:#fff; border-radius:16px; overflow:hidden;
         border:1px solid #eae8f0;
         box-shadow:0 2px 12px -6px rgba(84,51,145,.08); }
@@ -684,7 +825,10 @@ class AsignacionesModule {
 
     // Insert modal into DOM
     const existingModal = document.getElementById('modalAsignacion');
-    if (existingModal) existingModal.remove();
+    if (existingModal) {
+      destroyModal('modalAsignacion');
+      existingModal.remove();
+    }
 
     const temp = document.createElement('div');
     temp.innerHTML = html;

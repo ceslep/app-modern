@@ -15,6 +15,7 @@
     <link href="https://unpkg.com/tabulator-tables@4.9.3/dist/css/tabulator.min.css" rel="stylesheet">
     <script src="https://unpkg.com/tabulator-tables@4.9.3/dist/js/tabulator.min.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script type="module" src="/src/main.js"></script>
     <style>
       /* Critical path: hide app until JS boots */
@@ -412,52 +413,91 @@
 
                     <section id="seccionCertificados" class="content-section hidden">
                         <h2 class="section-heading mb-6">
-                            <i class="bi bi-award text-[#543391]"></i> Certificados
+                            <i class="bi bi-award text-[#543391]"></i> Certificados y Constancias
                         </h2>
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <div class="glass-card p-6">
-                                <h3 class="font-semibold text-gray-700 mb-4">Generar Certificado Individual</h3>
-                                <div class="space-y-4">
-                                    <div class="flex gap-2">
-                                        <input type="text" class="flex-1 px-3 py-2.5 border border-gray-200 rounded-xl text-sm
-                                                       focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
-                                                       transition-all" id="searchStudentCert" placeholder="Buscar estudiante...">
-                                        <button class="px-3 py-2.5 border border-gray-200 rounded-xl text-gray-600
-                                                       hover:bg-gray-50 transition-all text-sm" id="btnSearchStudent">
-                                            <i class="bi bi-search"></i>
-                                        </button>
-                                    </div>
-                                    <div id="certSearchResults" class="text-sm"></div>
-                                    <div class="flex items-center gap-2 text-sm">
-                                        <span class="font-medium text-gray-600">Seleccionado:</span>
-                                        <span id="selectedStudentName" class="text-gray-400">Ninguno</span>
-                                        <input type="hidden" id="selectedStudentId">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Tipo de Certificado</label>
-                                        <select class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm
-                                                       focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
-                                                       transition-all bg-white" id="certTemplate">
-                                            <option value="">Seleccione...</option>
-                                            <option value="constancia">Constancia de Estudio</option>
-                                            <option value="promocion">Carta de Promoción</option>
-                                            <option value="grado">Diploma de Grado</option>
-                                        </select>
-                                    </div>
-                                    <button class="w-full flex items-center justify-center gap-2 px-4 py-2.5
-                                                   bg-[#543391] hover:bg-[#6f4ab3] text-white font-medium
-                                                   rounded-xl shadow-sm transition-all text-sm" id="btnGenerateCert">
-                                        <i class="bi bi-file-earmark-pdf"></i> Generar Certificado
+
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                            <div class="glass-card p-4 lg:col-span-1">
+                                <h3 class="font-semibold text-gray-700 mb-3 text-sm">Buscar Estudiante</h3>
+                                <div class="flex gap-2">
+                                    <input type="text" class="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm
+                                                   focus:ring-2 focus:ring-[#543391] focus:border-transparent outline-none
+                                                   transition-all" id="codigoBusqueda"
+                                           placeholder="Código o documento..." autocomplete="off">
+                                    <button class="px-3 py-2 border border-gray-200 rounded-xl text-gray-600
+                                                   hover:bg-gray-50 transition-all text-sm" id="btnBuscarEstudiante">
+                                        <i class="bi bi-search"></i>
+                                    </button>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-2">Ingrese código o documento del estudiante</p>
+                            </div>
+
+                            <div class="glass-card p-4 lg:col-span-2">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h3 class="font-semibold text-gray-700 text-sm">Acciones</h3>
+                                    <span id="certContador" class="text-xs text-gray-400">0 seleccionados</span>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <button class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#543391] hover:bg-[#6f4ab3]
+                                                   text-white text-sm font-medium rounded-xl transition-all disabled:opacity-40"
+                                            id="btnGenCert" disabled>
+                                        <i class="bi bi-file-earmark-pdf"></i> Generar Certificados
+                                    </button>
+                                    <button class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700
+                                                   text-white text-sm font-medium rounded-xl transition-all disabled:opacity-40"
+                                            id="btnGenConst" disabled>
+                                        <i class="bi bi-file-text"></i> Generar Constancias
+                                    </button>
+                                    <button class="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 hover:bg-gray-200
+                                                   text-gray-600 text-sm font-medium rounded-xl transition-all"
+                                            id="btnLimpiar">
+                                        <i class="bi bi-x-circle"></i> Limpiar
                                     </button>
                                 </div>
                             </div>
-                            <div class="glass-card p-6 flex flex-col items-center justify-center text-center">
-                                <i class="bi bi-files text-6xl text-[#543391]/30 mb-4"></i>
-                                <p class="text-gray-600 mb-4">Genere certificados para múltiples estudiantes a la vez</p>
-                                <button class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#543391] hover:bg-[#6f4ab3]
-                                               text-white font-medium rounded-xl transition-all text-sm" id="btnBulkCert">
-                                    <i class="bi bi-arrow-right-circle"></i> Generar en Lote
-                                </button>
+                        </div>
+
+                        <div id="certLoader" class="hidden flex items-center justify-center py-12">
+                            <div class="text-center">
+                                <span data-orb="working" data-orb-size="40" class="inline-block" style="width:40px;height:40px"></span>
+                                <p class="text-sm text-gray-500 mt-2">Cargando...</p>
+                            </div>
+                        </div>
+
+                        <div id="certResultados" class="hidden">
+                            <div class="glass-card overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-sm">
+                                        <thead>
+                                            <tr class="border-b border-gray-100 bg-gray-50/50">
+                                                <th class="text-left px-4 py-3 font-medium text-gray-500 w-10">
+                                                    <input type="checkbox" id="checkTodo">
+                                                </th>
+                                                <th class="text-left px-4 py-3 font-medium text-gray-500">Código</th>
+                                                <th class="text-left px-4 py-3 font-medium text-gray-500">Nombres</th>
+                                                <th class="text-left px-4 py-3 font-medium text-gray-500">Grado</th>
+                                                <th class="text-left px-4 py-3 font-medium text-gray-500">Grupo</th>
+                                                <th class="text-left px-4 py-3 font-medium text-gray-500">Promedio</th>
+                                                <th class="text-left px-4 py-3 font-medium text-gray-500 w-24">Acción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="certTableBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="certSinResultados" class="hidden glass-card p-8 text-center">
+                            <i class="bi bi-search text-4xl text-gray-300 mb-3 block"></i>
+                            <p class="text-gray-500 text-sm">Busque un estudiante para generar certificados</p>
+                        </div>
+
+                        <div id="certLinks" class="hidden mt-4">
+                            <div class="glass-card p-4">
+                                <h4 class="text-sm font-semibold text-gray-600 mb-2">
+                                    <i class="bi bi-download"></i> Descargas
+                                </h4>
+                                <div id="certLinksList" class="space-y-1 text-sm"></div>
                             </div>
                         </div>
                     </section>
@@ -477,7 +517,10 @@
                                     </label>
                                 </div>
                                 <div id="contenedorNotificaciones">
-                                    <p class="text-sm text-gray-400">Cargando notificaciones...</p>
+                                    <div class="text-center py-4">
+                                        <span data-orb="searching" data-orb-size="36" class="inline-block" style="width:36px;height:36px"></span>
+                                        <p class="text-sm text-gray-400 mt-2">Cargando notificaciones...</p>
+                                    </div>
                                 </div>
                             </div>
                             <div class="glass-card p-6">
@@ -674,10 +717,7 @@
                         <h2 class="section-heading mb-6">
                             <i class="bi bi-people-fill text-[#543391]"></i> Consolidado de Convivencia
                         </h2>
-                        <div class="glass-card p-12 text-center">
-                            <i class="bi bi-tools text-5xl text-gray-300 mb-4 block"></i>
-                            <p class="text-gray-400">Módulo en desarrollo</p>
-                        </div>
+                        <div id="contenedorConsolidadoConvivencia"></div>
                     </section>
 
                     <section id="seccionConsultaEstudiante" class="content-section hidden">
@@ -779,7 +819,7 @@
         <!-- Fullscreen Spinner -->
         <div id="fullscreen-spinner" class="hidden fixed inset-0 bg-white/80 z-[9999] flex items-center justify-center">
             <div class="text-center">
-                <div class="w-12 h-12 border-4 border-[#543391] border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <span data-orb="working" data-orb-size="48" class="inline-block mx-auto" style="width:48px;height:48px"></span>
             </div>
         </div>
 

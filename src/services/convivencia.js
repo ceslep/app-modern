@@ -15,6 +15,10 @@ class ConvivenciaService {
     return api.get('convivencia', { student: studentId });
   }
 
+  getStudentDetail(studentId) {
+    return api.post('convivencia/student-detail', { estudiante: studentId });
+  }
+
   /**
    * Get convivencia records for a group
    */
@@ -39,8 +43,8 @@ class ConvivenciaService {
   /**
    * Get consolidation by area
    */
-  getConsolidation(asignacion, nivel, numero, periodo) {
-    return api.get('convivencia/consolidation', { asignacion, nivel, numero, periodo });
+  getConsolidation(params = {}) {
+    return api.get('convivencia/consolidation', params);
   }
 
   /**

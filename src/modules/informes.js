@@ -333,7 +333,7 @@ class InformesModule {
         <div id="progressContainer" class="hidden px-4 py-3 bg-gradient-to-r from-[#543391]/5 to-emerald-50/40 border-b border-gray-100">
           <div class="flex items-center justify-between text-[11px] mb-1.5">
             <span class="flex items-center gap-1.5 text-gray-600">
-              <i class="bi bi-arrow-repeat animate-spin text-[#543391]"></i>
+              <span data-orb="working" data-orb-size="16" class="inline-block align-middle" style="width:16px;height:16px"></span>
               <span id="progressLabel">Generando informes...</span>
             </span>
             <span id="progressText" class="font-mono text-[#543391] font-semibold">0/0 (0%)</span>

@@ -7,6 +7,13 @@ import { endpoint } from '@config/endpoints.js';
 import { $, delegate, escapeHtml } from '@utils/dom.js';
 import { alertSuccess, alertError, alertWarning, alertConfirm, showToast } from '@utils/alert.js';
 
+function decodeHtmlEntities(str) {
+  if (!str) return '';
+  const el = document.createElement('textarea');
+  el.innerHTML = str;
+  return el.value;
+}
+
 const SECTION_ID = 'seccionConvivencia';
 const CONTAINER_ID = 'observadorContent';
 
@@ -677,7 +684,7 @@ class ConvivenciaModule {
     if (!this.showItemsModal) return '';
     const loading = this.itemsLoading ? `
       <div class="flex items-center justify-center py-12">
-        <div class="w-8 h-8 border-4 border-[#543391] border-t-transparent rounded-full animate-spin"></div>
+        <span data-orb="working" data-orb-size="36" class="inline-block" style="width:36px;height:36px"></span>
         <span class="ml-3 text-sm text-gray-500">Cargando situaciones...</span>
       </div>
     ` : '';
@@ -1471,41 +1478,58 @@ class ConvivenciaModule {
     const doc = new jsPDF();
     const w = doc.internal.pageSize.getWidth();
 
-    doc.setFillColor(45, 27, 105).rect(0, 0, w, 35, 'F');
-    doc.setTextColor(255, 255, 255)
+    let escudoDataUrl = null;
+    try {
+      const resp = await fetch('escudohd.png');
+      const blob = await resp.blob();
+      escudoDataUrl = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+    } catch (_) { /* escudo not available */ }
+
+    if (escudoDataUrl) {
+      doc.addImage(escudoDataUrl, 'PNG', 15, 8, 18, 22);
+    }
+
+    doc.setTextColor(30, 30, 30)
       .setFontSize(16)
       .setFont('helvetica', 'bold')
-      .text('I.E. DE OCCIDENTE', 15, 15);
-    doc.setFontSize(9).text('OBSERVADOR DEL ESTUDIANTE - CONVIVENCIA ESCOLAR', 15, 25);
-    doc.setFontSize(8).text('Según Ley 1620/2013 - Ley de Convivencia Escolar', 15, 31);
+      .text('I.E. DE OCCIDENTE', escudoDataUrl ? 38 : 15, 15);
+    doc.setFontSize(9).setFont('helvetica', 'normal')
+      .text('OBSERVADOR DEL ESTUDIANTE - CONVIVENCIA ESCOLAR', escudoDataUrl ? 38 : 15, 22);
+    doc.setFontSize(8).text('Segun Ley 1620/2013 - Ley de Convivencia Escolar', escudoDataUrl ? 38 : 15, 28);
+
+    doc.setDrawColor(84, 51, 145).setLineWidth(0.5).line(15, 32, w - 15, 32);
 
     doc.setTextColor(30, 30, 30).setFontSize(11).setFont('helvetica', 'bold');
     doc.text('DATOS DEL ESTUDIANTE', 15, 45);
 
     doc.setFontSize(10).setFont('helvetica', 'normal');
-    const tipoLabel = TIPOS.find((t) => t.id === this.record.tipo)?.label || this.record.tipo;
-    doc.text(`Nombre: ${this.record.estudiante.nombres}`, 15, 53);
-    doc.text(`Grado: ${this.record.estudiante.grado}`, 100, 53);
-    doc.text(`Código: ${this.record.estudiante.codigo || 'N/A'}`, 15, 60);
+    const tipoLabel = decodeHtmlEntities(TIPOS.find((t) => t.id === this.record.tipo)?.label || this.record.tipo);
+    doc.text(`Nombre: ${decodeHtmlEntities(this.record.estudiante.nombres)}`, 15, 53);
+    doc.text(`Grado: ${decodeHtmlEntities(this.record.estudiante.grado)}`, 100, 53);
+    doc.text(`Codigo: ${this.record.estudiante.codigo || 'N/A'}`, 15, 60);
     doc.text(`Fecha: ${this.record.fecha}`, 100, 60);
     doc.text(`Tipo: ${tipoLabel}`, 15, 67);
-    doc.text(`Impacto: ${IMPACTO.find((i) => i.id === this.record.impacto)?.label || this.record.impacto}`, 100, 67);
+    doc.text(`Impacto: ${decodeHtmlEntities(IMPACTO.find((i) => i.id === this.record.impacto)?.label || this.record.impacto)}`, 100, 67);
 
     if (this.record.esNEE && this.record.tipoNEE !== 'ninguno') {
       doc.setTextColor(100, 100, 100).setFontSize(9);
-      doc.text(`NEE: ${TIPOS_NEE.find((n) => n.id === this.record.tipoNEE)?.label}`, 15, 74);
+      doc.text(`NEE: ${decodeHtmlEntities(TIPOS_NEE.find((n) => n.id === this.record.tipoNEE)?.label)}`, 15, 74);
     }
 
     const cats = CATEGORIAS[this.record.tipo] || [];
-    const catLabel = cats.find((c) => c.id === this.record.categoria)?.label || this.record.categoria;
+    const catLabel = decodeHtmlEntities(cats.find((c) => c.id === this.record.categoria)?.label || this.record.categoria);
     doc.setTextColor(30, 30, 30).setFontSize(11).setFont('helvetica', 'bold');
-    doc.text('CATEGORÍA', 15, 85);
+    doc.text('CATEGORIA', 15, 85);
     doc.setFontSize(10).setFont('helvetica', 'normal');
     doc.text(catLabel, 15, 92);
 
-    doc.setFontSize(11).setFont('helvetica', 'bold').text('DESCRIPCIÓN DE LOS HECHOS', 15, 103);
+    doc.setFontSize(11).setFont('helvetica', 'bold').text('DESCRIPCION DE LOS HECHOS', 15, 103);
     doc.setFontSize(9).setFont('helvetica', 'normal');
-    const splitDesc = doc.splitTextToSize(this.record.descripcion, 180);
+    const splitDesc = doc.splitTextToSize(decodeHtmlEntities(this.record.descripcion), 180);
     doc.text(splitDesc, 15, 110);
 
     let currentY = 110 + splitDesc.length * 4 + 10;
@@ -1531,7 +1555,7 @@ class ConvivenciaModule {
       currentY += 7;
       doc.setFontSize(9).setFont('helvetica', 'normal');
       this.record.accionesInmediatas.forEach((accion) => {
-        const accLabel = ACCIONES_INMEDIATAS.find((a) => a.id === accion)?.label || accion;
+        const accLabel = decodeHtmlEntities(ACCIONES_INMEDIATAS.find((a) => a.id === accion)?.label || accion);
         doc.text(`• ${accLabel}`, 15, currentY);
         currentY += 5;
       });
@@ -1543,7 +1567,7 @@ class ConvivenciaModule {
       doc.text('DERIVACIÓN', 15, currentY);
       currentY += 7;
       doc.setFontSize(9).setFont('helvetica', 'normal');
-      const derivLabel = DERIVACIONES.find((d) => d.id === this.record.derivacion)?.label || this.record.derivacion;
+      const derivLabel = decodeHtmlEntities(DERIVACIONES.find((d) => d.id === this.record.derivacion)?.label || this.record.derivacion);
       doc.text(derivLabel, 15, currentY);
       currentY += 10;
     }
@@ -1559,7 +1583,7 @@ class ConvivenciaModule {
 
       doc.setTextColor(30, 30, 30).setFontSize(9).setFont('helvetica', 'normal');
       entidadesNotificadas.forEach((ent) => {
-        const entLabel = ACCIONES_INMEDIATAS.find((a) => a.id === ent)?.label || ent;
+        const entLabel = decodeHtmlEntities(ACCIONES_INMEDIATAS.find((a) => a.id === ent)?.label || ent);
         doc.text(`• ${entLabel}`, 15, currentY);
         currentY += 5;
       });
@@ -1570,7 +1594,7 @@ class ConvivenciaModule {
         doc.text('DATOS DE CONTACTO:', 15, currentY);
         currentY += 5;
         doc.setFontSize(8).setFont('helvetica', 'normal');
-        const splitContact = doc.splitTextToSize(this.record.contactoEntidades, 175);
+        const splitContact = doc.splitTextToSize(decodeHtmlEntities(this.record.contactoEntidades), 175);
         doc.text(splitContact, 15, currentY);
         currentY += splitContact.length * 4;
       }
@@ -1582,7 +1606,7 @@ class ConvivenciaModule {
       doc.text('PLAN DE SEGUIMIENTO', 15, currentY);
       currentY += 7;
       doc.setFontSize(9).setFont('helvetica', 'normal');
-      const splitPlan = doc.splitTextToSize(this.record.planSeguimiento, 180);
+      const splitPlan = doc.splitTextToSize(decodeHtmlEntities(this.record.planSeguimiento), 180);
       doc.text(splitPlan, 15, currentY);
       currentY += splitPlan.length * 4 + 10;
     }
@@ -1592,7 +1616,7 @@ class ConvivenciaModule {
       doc.text('COMPROMISOS DEL ESTUDIANTE', 15, currentY);
       currentY += 7;
       doc.setFontSize(9).setFont('helvetica', 'normal');
-      const splitComp = doc.splitTextToSize(this.record.compromisos, 180);
+      const splitComp = doc.splitTextToSize(decodeHtmlEntities(this.record.compromisos), 180);
       doc.text(splitComp, 15, currentY);
     }
 

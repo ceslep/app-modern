@@ -167,7 +167,7 @@ class DescripcionesModule {
     if (refreshBtn) {
       refreshBtn.dataset._prevHtml = refreshBtn.innerHTML;
       refreshBtn.disabled = true;
-      refreshBtn.innerHTML = '<span class="inline-block w-3 h-3 border-2 border-[#543391] border-t-transparent rounded-full animate-spin"></span> Cargando...';
+      refreshBtn.innerHTML = '<span data-orb="working" data-orb-size="16" class="inline-block align-middle" style="width:16px;height:16px"></span> Cargando...';
     }
 
     try {

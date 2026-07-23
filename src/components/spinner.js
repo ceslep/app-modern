@@ -1,6 +1,9 @@
 /**
- * Spinner/loading component
+ * Spinner/loading component — backed by thinking-orbs.
+ * See src/components/thinkingOrb.js for the orb engine.
  */
+
+import { createOrb } from '@components/thinkingOrb.js';
 
 const spinners = new Map();
 
@@ -16,24 +19,30 @@ export function showSpinner(containerId, message = 'Cargando...') {
 
   const spinner = document.createElement('div');
   spinner.className = 'loading-spinner text-center p-4';
-  spinner.innerHTML = `
-    <div class="inline-block w-8 h-8 border-4 border-[#543391] border-t-transparent rounded-full animate-spin" role="status">
-      <span class="sr-only">${message}</span>
-    </div>
-    <div class="mt-2 text-gray-400 text-xs">${message}</div>
-  `;
+
+  const orbHost = document.createElement('div');
+  orbHost.className = 'inline-block';
+  spinner.appendChild(orbHost);
+
+  const caption = document.createElement('div');
+  caption.className = 'mt-2 text-gray-400 text-xs';
+  caption.textContent = message;
+  spinner.appendChild(caption);
+
+  const orb = createOrb(orbHost, { state: 'working', size: 40 });
 
   container.appendChild(spinner);
-  spinners.set(containerId, spinner);
+  spinners.set(containerId, { el: spinner, orb });
 }
 
 /**
  * Hide spinner in a container
  */
 export function hideSpinner(containerId) {
-  const spinner = spinners.get(containerId);
-  if (spinner) {
-    spinner.remove();
+  const entry = spinners.get(containerId);
+  if (entry) {
+    entry.orb?.destroy();
+    entry.el.remove();
     spinners.delete(containerId);
   }
 }
@@ -49,6 +58,8 @@ export function toggleSpinner(containerId, message = 'Cargando...') {
   }
 }
 
+let fullscreenOrb = null;
+
 /**
  * Show fullscreen spinner
  */
@@ -59,14 +70,21 @@ export function showFullscreenSpinner(message = 'Cargando...') {
   spinner = document.createElement('div');
   spinner.id = 'fullscreen-spinner';
   spinner.className = 'fullspinner';
-  spinner.innerHTML = `
-    <div class="text-center">
-      <div class="inline-block w-12 h-12 border-4 border-[#543391] border-t-transparent rounded-full animate-spin" role="status" style="width: 3rem; height: 3rem;">
-        <span class="sr-only">${message}</span>
-      </div>
-      <div class="mt-3 text-gray-400">${message}</div>
-    </div>
-  `;
+
+  const box = document.createElement('div');
+  box.className = 'text-center';
+
+  const orbHost = document.createElement('div');
+  orbHost.className = 'inline-block';
+  box.appendChild(orbHost);
+
+  const caption = document.createElement('div');
+  caption.className = 'mt-3 text-gray-400';
+  caption.textContent = message;
+  box.appendChild(caption);
+
+  spinner.appendChild(box);
+  fullscreenOrb = createOrb(orbHost, { state: 'working', size: 64 });
 
   document.body.appendChild(spinner);
 }
@@ -77,6 +95,8 @@ export function showFullscreenSpinner(message = 'Cargando...') {
 export function hideFullscreenSpinner() {
   const spinner = document.getElementById('fullscreen-spinner');
   if (spinner) {
+    fullscreenOrb?.destroy();
+    fullscreenOrb = null;
     spinner.remove();
   }
 }

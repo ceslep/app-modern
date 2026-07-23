@@ -1,6 +1,9 @@
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import './styles/main.css';
 
+// Thinking-orb loaders: auto-mounts any [data-orb] element (incl. injected markup).
+import './components/thinkingOrb.js';
+
 // Legacy PHP preload — fires immediately (geolocaliza, getInfoDocentes, getasignacion, etc.)
 import './services/preload.js';
 
@@ -33,6 +36,7 @@ const DEV_SECTION_MAP = {
   seccionConcentradorNotas:         'modules/concentrador.js',
   seccionCertificados:              'modules/certificados.js',
   seccionConvivencia:               'modules/convivencia.js',
+  seccionConsolidadoConvivencia:    'modules/consolidadoConvivencia.js',
   seccionNotificaciones:            'modules/notificaciones.js',
   // Persistent chrome components
   sidebar:                          'components/sidebar.js',
@@ -64,6 +68,7 @@ import './modules/descripciones.js';
 import './modules/explorador.js';
 import './modules/puestos.js';
 import './modules/consolidadoInasistencias.js';
+import './modules/consolidadoConvivencia.js';
 
 const HEALTH_CHECK_INTERVAL_MS = 60_000;
 const HEALTH_CHECK_TIMEOUT_MS = 5_000;

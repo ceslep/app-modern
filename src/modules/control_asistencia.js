@@ -4,6 +4,7 @@ import { endpoint } from '@config/endpoints.js';
 import { createPieChart, createDoughnutChart, destroyAllCharts } from '@utils/chart.js';
 import { alertHtml, alertError, showToast } from '@utils/alert.js';
 import { escapeHtml, $, delegate } from '@utils/dom.js';
+import { showModal } from '@utils/modal.js';
 
 const SECTION_ID = 'seccionControlInasistencias';
 const CONTAINER_ID = 'contenedorControlAsistencia';
@@ -168,7 +169,7 @@ class ControlAsistenciaModule {
       resultsEl.innerHTML = `
         <div class="flex items-center justify-center py-12">
           <div class="text-center">
-            <div class="w-8 h-8 border-4 border-[#543391] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+            <span data-orb="searching" data-orb-size="40" class="inline-block mx-auto mb-3" style="width:40px;height:40px"></span>
             <p class="text-sm text-gray-400">Cargando...</p>
           </div>
         </div>
@@ -453,6 +454,10 @@ class ControlAsistenciaModule {
                   class="inline-flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 rounded-lg transition-all text-sm">
             <i class="bi bi-x-lg"></i> Limpiar
           </button>
+          <button type="button" id="caPrintCodesBtn"
+                  class="inline-flex items-center gap-2 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg shadow-sm transition-all text-sm">
+            <i class="bi bi-printer"></i> Imprimir Códigos
+          </button>
         </div>
       </div>
 
@@ -511,6 +516,15 @@ class ControlAsistenciaModule {
       e.preventDefault();
       const p = parseInt(target.dataset.page);
       if (p && p !== this.currentPage) this.loadAll(p);
+    });
+
+    const printBtn = $('caPrintCodesBtn');
+    if (printBtn) {
+      printBtn.addEventListener('click', () => this._openPrintCodesModal());
+    }
+
+    delegate(document, 'click', '#caPrintGenerateBtn', (e, target) => {
+      this._generateBulkPDF();
     });
   }
 
@@ -622,6 +636,191 @@ class ControlAsistenciaModule {
 
     html += '</div>';
     return html;
+  }
+
+  /* ──────────────────────────────────────────────────────────────── */
+  /*  PRINT CODES MODAL                                              */
+  /* ──────────────────────────────────────────────────────────────── */
+
+  _injectPrintModals() {
+    if (this._printModalsInjected) return;
+    this._printModalsInjected = true;
+    const modalEl = document.getElementById('modal-container');
+    if (!modalEl) return;
+    modalEl.insertAdjacentHTML('beforeend', this._printCodesModalHTML());
+    modalEl.insertAdjacentHTML('beforeend', this._printCodesPreviewHTML());
+  }
+
+  _printCodesModalHTML() {
+    return `
+<div id="caPrintCodesModal" class="modal fixed inset-0 z-[1056] flex items-center justify-center hidden p-3 sm:p-6"
+     onclick="if(event.target===this)event.target.classList.add('hidden')">
+  <div class="relative z-[1060] w-full max-w-2xl bg-white rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100" style="background:linear-gradient(135deg,#323130 0%,#201f1e 100%)">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center text-white">
+          <i class="bi bi-printer text-sm"></i>
+        </div>
+        <div>
+          <h5 class="text-base font-semibold text-white">Imprimir Códigos</h5>
+          <p class="text-xs text-white/70" id="caPrintCount">0 estudiantes seleccionados</p>
+        </div>
+      </div>
+      <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all" onclick="document.getElementById('caPrintCodesModal')?.classList.add('hidden')">
+        <i class="bi bi-x-lg text-sm"></i>
+      </button>
+    </div>
+    <div class="flex items-center gap-3 px-6 py-3 border-b border-gray-100 bg-gray-50/50">
+      <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+        <input type="checkbox" id="caPrintSelectAll" class="w-4 h-4 rounded border-gray-300 text-[#543391] focus:ring-[#543391]">
+        Seleccionar todos
+      </label>
+      <span class="text-xs text-gray-400" id="caPrintVisibleCount">0 visible(s)</span>
+    </div>
+    <div id="caPrintStudentList" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
+    <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl">
+      <button type="button" class="px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all"
+              onclick="document.getElementById('caPrintCodesModal')?.classList.add('hidden')">
+        Cancelar
+      </button>
+      <button type="button" id="caPrintGenerateBtn"
+              class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              style="background:linear-gradient(135deg,#d97706,#f59e0b)" disabled>
+        <i class="bi bi-filetype-pdf"></i> Generar PDF
+      </button>
+    </div>
+  </div>
+</div>`;
+  }
+
+  _printCodesPreviewHTML() {
+    return `
+<div id="caPrintPreviewModal" class="modal fixed inset-0 z-[1056] flex items-center justify-center hidden p-3 sm:p-6"
+     onclick="if(event.target===this)event.target.classList.add('hidden')">
+  <div class="relative z-[1060] w-full max-w-5xl bg-white rounded-3xl shadow-2xl h-[90vh] flex flex-col overflow-hidden">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100" style="background:linear-gradient(135deg,#323130 0%,#201f1e 100%)">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center text-white">
+          <i class="bi bi-filetype-pdf text-sm"></i>
+        </div>
+        <div>
+          <h5 class="text-base font-semibold text-white">Vista Previa</h5>
+          <p class="text-xs text-white/70" id="caPrintPreviewInfo">—</p>
+        </div>
+      </div>
+      <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all" onclick="document.getElementById('caPrintPreviewModal')?.classList.add('hidden')">
+        <i class="bi bi-x-lg text-sm"></i>
+      </button>
+    </div>
+    <div class="flex-1 bg-gray-100 p-4 min-h-0 relative">
+      <div id="caPrintPreviewLoading" class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-xl z-10">
+        <div class="text-center">
+          <span data-orb="working" data-orb-size="44" class="inline-block mx-auto" style="width:44px;height:44px"></span>
+          <p class="text-sm text-gray-500 mt-3">Generando PDF...</p>
+        </div>
+      </div>
+      <iframe id="caPrintPreviewIframe" class="w-full h-full rounded-xl bg-white shadow-inner" style="border:none;"></iframe>
+    </div>
+    <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl">
+      <button type="button" class="px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all"
+              onclick="document.getElementById('caPrintPreviewModal')?.classList.add('hidden')">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>`;
+  }
+
+  _openPrintCodesModal() {
+    this._injectPrintModals();
+    const list = $('caPrintStudentList');
+    const count = $('caPrintCount');
+    const visible = $('caPrintVisibleCount');
+    const selectAll = $('caPrintSelectAll');
+    const generateBtn = $('caPrintGenerateBtn');
+    if (!list) return;
+
+    if (!this.students.length) {
+      list.innerHTML = '<div class="text-center py-8 text-gray-400"><i class="bi bi-inbox text-3xl block mb-2"></i>No hay estudiantes cargados</div>';
+      if (count) count.textContent = '0 estudiantes seleccionados';
+      if (visible) visible.textContent = '0 visible(s)';
+      if (generateBtn) generateBtn.disabled = true;
+      showModal('caPrintCodesModal');
+      return;
+    }
+
+    const pageStudents = this.students;
+
+    if (visible) visible.textContent = `${pageStudents.length} visible(s)`;
+
+    list.innerHTML = pageStudents.map((est) => {
+      const label = `${escapeHtml(est.nombres || '')} <span class="text-[#543391]">${escapeHtml(est.estudiante || '')}</span> <span class="text-gray-400">${escapeHtml(String(est.nivel ?? ''))}-${escapeHtml(String(est.numero ?? ''))}</span>`;
+      return `
+        <label class="ca-print-row flex items-center gap-3 px-3 py-2 rounded-lg border border-gray-100 hover:border-[#543391]/30 hover:bg-[#543391]/[0.03] transition-all cursor-pointer">
+          <input type="checkbox" class="ca-print-check w-4 h-4 rounded border-gray-300 text-[#543391] focus:ring-[#543391] shrink-0"
+                 data-estudiante="${escapeHtml(est.estudiante || '')}" data-codigo="${escapeHtml(est.codigo || '')}" data-nombres="${escapeHtml(est.nombres || '')}" checked>
+          <span class="flex-1 min-w-0 text-sm text-gray-700 truncate">${label}</span>
+        </label>`;
+    }).join('');
+
+    if (selectAll) selectAll.checked = true;
+    this._updatePrintCount();
+    if (generateBtn) generateBtn.disabled = false;
+
+    // Bind list/selectAll handlers once (modal is reused across opens)
+    if (!this._printModalBound) {
+      this._printModalBound = true;
+
+      selectAll?.addEventListener('change', () => {
+        list.querySelectorAll('.ca-print-check').forEach(cb => cb.checked = selectAll.checked);
+        this._updatePrintCount();
+      });
+
+      list.addEventListener('change', (e) => {
+        if (e.target.classList.contains('ca-print-check')) {
+          this._updatePrintCount();
+        }
+      });
+    }
+
+    showModal('caPrintCodesModal');
+  }
+
+  _updatePrintCount() {
+    const checked = document.querySelectorAll('#caPrintStudentList .ca-print-check:checked').length;
+    const count = $('caPrintCount');
+    if (count) count.textContent = `${checked} estudiantes seleccionados`;
+    const generateBtn = $('caPrintGenerateBtn');
+    if (generateBtn) generateBtn.disabled = checked === 0;
+  }
+
+  _generateBulkPDF() {
+    const checked = document.querySelectorAll('#caPrintStudentList .ca-print-check:checked');
+    if (!checked.length) {
+      showToast('Seleccione al menos un estudiante', 'warning');
+      return;
+    }
+
+    const year = $('caYear')?.value || new Date().getFullYear();
+    const codigos = Array.from(checked).map(cb => cb.dataset.codigo).filter(Boolean);
+    if (!codigos.length) {
+      showToast('Los estudiantes seleccionados no tienen código', 'warning');
+      return;
+    }
+
+    const pdfUrl = `/app-modern/server/router.php?__api=matriculaReport/pdf-bulk&codigos=${encodeURIComponent(codigos.join(','))}&year=${encodeURIComponent(year)}`;
+    const loading = $('caPrintPreviewLoading');
+    const iframe = $('caPrintPreviewIframe');
+    const info = $('caPrintPreviewInfo');
+
+    if (loading) loading.classList.remove('hidden');
+    if (info) info.textContent = `${codigos.length} estudiante(s)`;
+    if (iframe) {
+      iframe.onload = () => { if (loading) loading.classList.add('hidden'); };
+      iframe.src = pdfUrl;
+    }
+
+    showModal('caPrintPreviewModal');
   }
 }
 

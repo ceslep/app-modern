@@ -149,7 +149,7 @@ class ExploradorModule {
       contentArea.innerHTML = `
         <div class="flex items-center justify-center py-12">
           <div class="text-center">
-            <div class="w-8 h-8 border-4 border-[#543391] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+            <span data-orb="searching" data-orb-size="40" class="inline-block mx-auto mb-3" style="width:40px;height:40px"></span>
             <p class="text-sm text-gray-400">Cargando...</p>
           </div>
         </div>
@@ -244,7 +244,7 @@ class ExploradorModule {
       <div id="exploradorContent">
         <div class="flex items-center justify-center py-16">
           <div class="text-center">
-            <div class="w-10 h-10 border-4 border-[#543391] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+            <span data-orb="searching" data-orb-size="48" class="inline-block mx-auto mb-3" style="width:48px;height:48px"></span>
             <p class="text-sm text-gray-400">Cargando explorador de archivos...</p>
           </div>
         </div>

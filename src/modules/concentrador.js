@@ -360,7 +360,7 @@ class ConcentradorModule {
     const container = $('contenedorConcentrador');
     const consolContainer = $('contenedorConsolidado');
     consolContainer.classList.add('hidden');
-    container.innerHTML = `<div class="flex justify-center my-8"><div class="w-8 h-8 border-4 border-[#543391] border-t-transparent rounded-full animate-spin"></div></div>`;
+    container.innerHTML = `<div class="flex justify-center my-8"><span data-orb="working" data-orb-size="36" class="inline-block" style="width:36px;height:36px"></span></div>`;
 
     try {
       const resp = await fetch(endpoint('/getConcentrador.php'), {
@@ -753,7 +753,7 @@ class ConcentradorModule {
 
     Swal.fire({
       title: `Estadísticas: ${asignatura}`,
-      html: `<div class="flex items-center justify-center py-12"><svg class="animate-spin h-8 w-8 text-[#543391]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg><span class="ml-3 text-gray-500 text-sm">Cargando estadísticas...</span></div>`,
+      html: `<div class="flex items-center justify-center py-12"><span data-orb="solving" data-orb-size="36" class="inline-block" style="width:36px;height:36px"></span><span class="ml-3 text-gray-500 text-sm">Cargando estadísticas...</span></div>`,
       width: '800px',
       showCloseButton: false,
       showConfirmButton: false,
@@ -862,7 +862,7 @@ class ConcentradorModule {
 
     Swal.fire({
       title: `Detalle: ${asignatura}`,
-      html: `<div class="flex items-center justify-center py-12"><svg class="animate-spin h-8 w-8 text-[#543391]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg><span class="ml-3 text-gray-500 text-sm">Cargando notas...</span></div>`,
+      html: `<div class="flex items-center justify-center py-12"><span data-orb="working" data-orb-size="36" class="inline-block" style="width:36px;height:36px"></span><span class="ml-3 text-gray-500 text-sm">Cargando notas...</span></div>`,
       width: '700px',
       showCloseButton: false,
       showConfirmButton: false,
@@ -986,7 +986,7 @@ class ConcentradorModule {
 
     Swal.fire({
       title: `Planilla: ${asignatura}`,
-      html: `<div class="flex items-center justify-center py-12"><svg class="animate-spin h-8 w-8 text-[#543391]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg><span class="ml-3 text-gray-500 text-sm">Cargando notas...</span></div>`,
+      html: `<div class="flex items-center justify-center py-12"><span data-orb="working" data-orb-size="36" class="inline-block" style="width:36px;height:36px"></span><span class="ml-3 text-gray-500 text-sm">Cargando notas...</span></div>`,
       width: '95%',
       showCloseButton: false,
       showConfirmButton: false,
@@ -1127,7 +1127,7 @@ class ConcentradorModule {
 
     const container = $('contenedorConsolidado');
     container.classList.remove('hidden');
-    container.innerHTML = `<div class="flex justify-center my-4"><div class="w-6 h-6 border-4 border-[#543391] border-t-transparent rounded-full animate-spin"></div></div>`;
+    container.innerHTML = `<div class="flex justify-center my-4"><span data-orb="working" data-orb-size="28" class="inline-block" style="width:28px;height:28px"></span></div>`;
 
     try {
       const resp = await fetch(endpoint('/consolidadoPerdidas.php'), {

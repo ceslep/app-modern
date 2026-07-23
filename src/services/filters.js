@@ -19,6 +19,11 @@ class FiltersService {
     return api.get('niveles', { asignacion, year });
   }
 
+  /** Subject quantities per group. */
+  getNumeros(asignacion, nivel, year) {
+    return api.post('numeros', { asignacion, nivel, year });
+  }
+
   /** Map of nivel => full grade name. */
   getNombresNiveles() {
     return api.get('niveles/nombres');

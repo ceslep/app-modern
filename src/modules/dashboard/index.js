@@ -133,6 +133,17 @@ async function hydrate(container, statsEl) {
       updateStat(statsEl, 'valoraciones', d.porcentaje_valoraciones ?? 0, { decimals: 1 });
       updateStat(statsEl, 'inasistencias', d.total_inasistencias ?? 0);
       updateStat(statsEl, 'convivencia', d.total_convivencia ?? 0);
+      // Card reflects the current period; badge shows that period. If the data
+      // lags behind the current year (backend fell back), append that year.
+      const convBadge = statsEl.querySelector('[data-stat-id="convivencia"] .db-stat-badge');
+      if (convBadge) {
+        const periodo = d.convivencia_periodo || d.periodo_actual;
+        const cy = Number(d.convivencia_year);
+        if (periodo) {
+          convBadge.textContent = cy && cy !== Number(d.year) ? `${periodo} · ${cy}` : String(periodo);
+          convBadge.classList.remove('soon');
+        }
+      }
       updateStat(statsEl, 'descripciones', d.total_descripciones ?? 0);
       const badge = statsEl.querySelector('[data-stat-id="valoraciones"] .db-stat-badge');
       if (badge) badge.textContent = d.periodo_actual || 'Periodo actual';

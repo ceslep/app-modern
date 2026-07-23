@@ -323,11 +323,6 @@ STYLE.textContent = `
 @media (max-width:540px) { .notas-module .nt-config-grid { grid-template-columns:1fr; } }
 
 /* ---- Spinners / carga ---- */
-.notas-module .nt-spinner {
-  width:34px; height:34px; border-radius:50%;
-  border:3px solid rgba(84,51,145,.15); border-top-color:var(--nt-brand);
-  animation:nt-spin .8s linear infinite;
-}
 .notas-module .nt-loading { display:flex; justify-content:center; padding:2rem 0; }
 .notas-module .nt-save-spinner { width:20px; height:20px; border-radius:50%; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; animation:nt-spin .7s linear infinite; }
 
@@ -548,7 +543,7 @@ class NotasModule {
         <i class="bi bi-calculator" style="font-size:1.4rem"></i>
       </button>
       <div id="notasLoading" class="hidden nt-loading">
-        <div class="nt-spinner"></div>
+        <span data-orb="working" data-orb-size="34" class="inline-block" style="width:34px;height:34px"></span>
       </div>
       <div id="notasModalContainer" class="hidden nt-modal-overlay">
         <div class="nt-modal">
@@ -562,7 +557,7 @@ class NotasModule {
           </div>
           <div class="nt-modal-body">
             <div class="nt-loading" id="notasModalLoading">
-              <div class="nt-spinner"></div>
+              <span data-orb="searching" data-orb-size="34" class="inline-block" style="width:34px;height:34px"></span>
             </div>
             <select id="notasModalSelect" class="hidden" style="display:none"></select>
             <div id="notasModalSelectWrap"></div>

@@ -3,56 +3,80 @@ import { notifications } from '../services/notifications.js';
 import { activity } from '../services/activity.js';
 import { auth } from '../services/auth.js';
 
+// thiings.co 3D icons (PNG). Icons by Charlie Clark — https://www.thiings.co
+// Vite resolves these to hashed asset URLs at build time.
+const ICONS = import.meta.glob('../assets/icons/thiings/*.png', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+});
+// Map section key -> resolved URL (key derived from filename)
+const ICON_URL = Object.fromEntries(
+  Object.entries(ICONS).map(([path, url]) => [
+    path.slice(path.lastIndexOf('/') + 1, -4),
+    url,
+  ]),
+);
+
 const SECTIONS = [
-  { id: 'dashboard',        label: 'Dashboard',         icon: 'bi-speedometer2',     sectionId: 'seccionDashboard' },
-  { id: 'informes',         label: 'Informes',          icon: 'bi-file-earmark-text', sectionId: 'seccionInformes', maestra: true },
-  { id: 'descargas',        label: 'Descargas',         icon: 'bi-download',          sectionId: 'seccionDescargas', maestra: true },
-  { id: 'descripciones',    label: 'Descripciones',     icon: 'bi-card-text',         sectionId: 'seccionDescripciones' },
-  { id: 'puestos',          label: 'Puestos',           icon: 'bi-trophy',            sectionId: 'seccionPuestos' },
+  { id: 'dashboard',        label: 'Dashboard',         icon: 'dashboard',      sectionId: 'seccionDashboard' },
+  { id: 'informes',         label: 'Informes',          icon: 'informes',       sectionId: 'seccionInformes', maestra: true },
+  { id: 'descargas',        label: 'Descargas',         icon: 'descargas',      sectionId: 'seccionDescargas', maestra: true },
+  { id: 'descripciones',    label: 'Descripciones',     icon: 'descripciones',  sectionId: 'seccionDescripciones' },
+  { id: 'puestos',          label: 'Puestos',           icon: 'puestos',        sectionId: 'seccionPuestos' },
   { id: 'divider1',                                                            divider: true },
-  { id: 'inasistencias',    label: 'Inasistencias',     icon: 'bi-person-x', sub: [
-    { id: 'seccionRegistroInasistencias',  label: 'Registrar Inasistencia' },
-    { id: 'seccionInasistencias',          label: 'Inasistencias' },
-    { id: 'seccionControlInasistencias',   label: 'Control Asistencia' },
-    { id: 'seccionObservador',             label: 'Observador' },
-    { id: 'seccionConsolidadoInasistencias', label: 'Consolidado Inasistencias' },
+  { id: 'inasistencias',    label: 'Inasistencias',     icon: 'inasistencias', sub: [
+    { id: 'seccionRegistroInasistencias',  label: 'Registrar Inasistencia', icon: 'pencil' },
+    { id: 'seccionInasistencias',          label: 'Inasistencias',          icon: 'hourglass' },
+    { id: 'seccionControlInasistencias',   label: 'Control Asistencia',     icon: 'check-mark' },
+    { id: 'seccionObservador',             label: 'Observador',             icon: 'eye' },
+    { id: 'seccionConsolidadoInasistencias', label: 'Consolidado Inasistencias', icon: 'spreadsheet' },
   ]},
   { id: 'divider2',                                                            divider: true },
-  { id: 'administrativo',   label: 'Admin.',            icon: 'bi-gear', maestra: true, sub: [
-    { id: 'seccionControlEstudiantes',    label: 'Estudiantes' },
-    { id: 'seccionAsignaciones',          label: 'Asignación Asig.', maestra: true },
-    { id: 'seccionSubirNotas',            label: 'Subir Notas' },
-    { id: 'seccionTiemposDocentes',       label: 'Tiempos Docentes' },
-    { id: 'seccionHistoricoDocentes',     label: 'Histórico Docentes' },
-    { id: 'seccionMensajeNotas',          label: 'Mensaje Notas' },
-    { id: 'seccionCerrarNotas',           label: 'Cerrar Notas' },
-    { id: 'seccionActivarNotas',          label: 'Activar Notas' },
-    { id: 'seccionCantidades',            label: 'Consultar Cantidades' },
-    { id: 'seccionVerificarFinales',      label: 'Verificar Finales' },
-    { id: 'seccionLog',                   label: 'Log del Sistema' },
+  { id: 'administrativo',   label: 'Administrativo',            icon: 'administrativo', maestra: true, sub: [
+    { id: 'seccionControlEstudiantes',    label: 'Estudiantes',            icon: 'student' },
+    { id: 'seccionAsignaciones',          label: 'Asignación Asig.', maestra: true, icon: 'link-icon' },
+    { id: 'seccionSubirNotas',            label: 'Subir Notas',            icon: 'up-arrow' },
+    { id: 'seccionTiemposDocentes',       label: 'Tiempos Docentes',       icon: 'wall-clock' },
+    { id: 'seccionHistoricoDocentes',     label: 'Histórico Docentes',     icon: 'hourglass' },
+    { id: 'seccionMensajeNotas',          label: 'Mensaje Notas',          icon: 'envelope' },
+    { id: 'seccionCerrarNotas',           label: 'Cerrar Notas',           icon: 'safe' },
+    { id: 'seccionActivarNotas',          label: 'Activar Notas',          icon: 'key' },
+    { id: 'seccionCantidades',            label: 'Consultar Cantidades',   icon: 'calculator' },
+    { id: 'seccionVerificarFinales',      label: 'Verificar Finales',      icon: 'magnifying-glass' },
+    { id: 'seccionLog',                   label: 'Log del Sistema',        icon: 'scroll' },
   ]},
   { id: 'divider3',                                                            divider: true },
-  { id: 'estadisticas',     label: 'Estadísticas',      icon: 'bi-bar-chart',         sectionId: 'seccionEstadisticas' },
-  { id: 'docentes',         label: 'Docentes',          icon: 'bi-person-badge', maestra: true, sectionId: 'seccionDocentes' },
-  { id: 'notas',            label: 'Notas',             icon: 'bi-journal-text', sub: [
-    { id: 'seccionNotas',               label: 'Registrar Notas' },
-    { id: 'seccionConcentradorNotas',   label: 'Concentrador Académico' },
+  { id: 'estadisticas',     label: 'Estadísticas',      icon: 'estadisticas',         sectionId: 'seccionEstadisticas' },
+  { id: 'docentes',         label: 'Docentes',          icon: 'docentes', maestra: true, sectionId: 'seccionDocentes' },
+  { id: 'notas',            label: 'Notas',             icon: 'notas', sub: [
+    { id: 'seccionNotas',               label: 'Registrar Notas',       icon: 'pencil' },
+    { id: 'seccionConcentradorNotas',   label: 'Concentrador Académico', icon: 'abacus' },
   ]},
   { id: 'divider4',                                                            divider: true },
-  { id: 'certificados',     label: 'Certificados',      icon: 'bi-award', maestra: true, sub: [
-    { id: 'seccionCertificados',        label: 'Generar Certificados' },
+  { id: 'certificados',     label: 'Certificados',      icon: 'certificados', maestra: true, sub: [
+    { id: 'seccionCertificados',        label: 'Generar Certificados',  icon: 'graduation-cap' },
   ]},
-  { id: 'convivencia',      label: 'Convivencia',       icon: 'bi-people', sub: [
-    { id: 'seccionConvivencia',            label: 'Reportar Convivencia' },
-    { id: 'seccionConsolidadoConvivencia', label: 'Consolidado de Convivencia' },
-    { id: 'seccionConsultaEstudiante',     label: 'Consultar Estudiante' },
+  { id: 'convivencia',      label: 'Convivencia',       icon: 'convivencia', sub: [
+    { id: 'seccionConvivencia',            label: 'Reportar Convivencia',      icon: 'megaphone' },
+    { id: 'seccionConsolidadoConvivencia', label: 'Consolidado de Convivencia', icon: 'balance-scale' },
+    { id: 'seccionConsultaEstudiante',     label: 'Consultar Estudiante',      icon: 'magnifying-glass' },
   ]},
   { id: 'divider5',                                                            divider: true },
-  { id: 'notificaciones',   label: 'Notificaciones',    icon: 'bi-bell', badge: true, sectionId: 'seccionNotificaciones' },
+  { id: 'notificaciones',   label: 'Notificaciones',    icon: 'notificaciones', badge: true, sectionId: 'seccionNotificaciones' },
 ];
 
 let currentSection = 'dashboard';
 let notificationCount = 0;
+
+// Render a thiings 3D icon as <img>, falling back to a bootstrap-icon glyph
+function iconMarkup(key) {
+  const url = ICON_URL[key];
+  if (url) {
+    return `<img src="${url}" alt="" class="sidebar-icon" width="24" height="24" loading="lazy" />`;
+  }
+  return `<i class="ti ti-${key}"></i>`;
+}
 
 function buildLabelMap() {
   const map = {};
@@ -131,14 +155,15 @@ function renderSidebar() {
       return `
         <div>
           <button class="sidebar-link w-full text-left" data-toggle-sub="${s.id}">
-            <i class="bi ${s.icon}"></i>
+            ${iconMarkup(s.icon)}
             <span class="flex-1">${s.label}</span>
-            <i class="bi bi-chevron-down text-xs transition-transform duration-200 ml-auto"></i>
+            <i class="bi bi-chevron-down sidebar-chevron text-xs transition-transform duration-200 ml-auto"></i>
           </button>
           <div class="ml-3 mt-1 space-y-0.5 hidden overflow-hidden transition-all duration-300" id="sub-${s.id}">
             ${visibleSubs.map((sub) => `
-              <a href="#" class="sidebar-link text-sm pl-10" data-section="${sub.id}">
-                ${sub.label}
+              <a href="#" class="sidebar-link sidebar-sublink text-sm" data-section="${sub.id}">
+                ${sub.icon ? iconMarkup(sub.icon) : ''}
+                <span class="flex-1">${sub.label}</span>
               </a>
             `).join('')}
           </div>
@@ -151,7 +176,7 @@ function renderSidebar() {
     return `
       <a href="#" class="sidebar-link ${currentSection === s.id ? 'active' : ''}"
          data-section="${s.sectionId || s.id}">
-        <i class="bi ${s.icon}"></i>
+        ${iconMarkup(s.icon)}
         <span class="flex-1">${s.label}</span>
         ${badge}
       </a>
@@ -177,7 +202,7 @@ function setupEvents() {
     const sub = document.getElementById(`sub-${target.dataset.toggleSub}`);
     if (sub) {
       sub.classList.toggle('hidden');
-      const chevron = target.querySelector('.bi-chevron-down');
+      const chevron = target.querySelector('.sidebar-chevron');
       if (chevron) chevron.style.transform = sub.classList.contains('hidden') ? '' : 'rotate(180deg)';
     }
   });
@@ -224,3 +249,6 @@ export function refreshSidebar() {
 export function navigateToSection(sectionId) {
   navigateTo(sectionId);
 }
+
+
+

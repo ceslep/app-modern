@@ -363,7 +363,7 @@ class PuestosModule {
       resultsContainer.innerHTML = `
         <div class="flex items-center justify-center py-12">
           <div class="text-center">
-            <div class="w-8 h-8 border-4 border-[#543391] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+            <span data-orb="solving" data-orb-size="40" class="inline-block mx-auto mb-3" style="width:40px;height:40px"></span>
             <p class="text-sm text-gray-400">Calculando puestos...</p>
           </div>
         </div>

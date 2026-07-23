@@ -57,6 +57,7 @@ $routeMap = [
   'convivencia/stats'       => 'estadisticasConvivencia.php',
   'convivencia/items'       => 'getItemsConvivencia.php',
   'convivencia/consolidation' => 'consolidadoConvivencia.php',
+  'convivencia/student-detail' => 'consolidadoConvivenciaEstudiante.php',
   'convivencia/recent'      => 'getConvivencia.php',
 
   // Filters / metadata
@@ -100,6 +101,7 @@ $routeMap = [
 
   // Reports
   'matriculaReport/pdf'     => 'matriculaReport.php',
+  'matriculaReport/pdf-bulk' => 'matriculaReportBulk.php',
   'reports/grades'          => 'generaReporte.php',
   'reports/report-card'     => 'generaReporte.php',
   'reports/report-pdf'     => 'generaReportePDF.php',

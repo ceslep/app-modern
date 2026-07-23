@@ -41,7 +41,7 @@ $countStmt->execute();
 $total = (int)$countStmt->get_result()->fetch_assoc()['total'];
 $countStmt->close();
 
-$sql = "SELECT eg.estudiante, eg.nombres, eg.nivel, eg.numero, eg.genero, s.sede AS asignacion
+$sql = "SELECT eg.codigo, eg.estudiante, eg.nombres, eg.nivel, eg.numero, eg.genero, s.sede AS asignacion
         FROM estugrupos eg
         JOIN sedes s ON eg.asignacion = s.ind
         WHERE $where

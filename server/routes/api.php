@@ -156,6 +156,7 @@ switch ($resource) {
             'GET' => match ($id) {
                 'stats' => $controller->stats(),
                 'items' => $controller->items(),
+                'consolidation' => $controller->consolidation(),
                 default => $controller->index(),
             },
             'POST' => $controller->create(),

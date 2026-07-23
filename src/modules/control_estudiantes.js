@@ -742,7 +742,7 @@ class ControlEstudiantesModule {
       <div id="histgrupos" class="hist-wrap flex-1 overflow-y-auto">
         <div class="hist-state">
           <div class="hist-state-icon" style="background:linear-gradient(135deg,#54339118,#6d49b820)">
-            <div class="w-7 h-7 border-[3px] border-[#543391] border-t-transparent rounded-full animate-spin"></div>
+            <span data-orb="working" data-orb-size="30" class="inline-block" style="width:30px;height:30px"></span>
           </div>
           <div class="hist-state-title">Cargando historial...</div>
           <div class="hist-state-desc">Obteniendo registros académicos del estudiante</div>
@@ -809,7 +809,7 @@ class ControlEstudiantesModule {
       </div>
 
       <!-- ── Toolbar ── -->
-      <div class="glass-card p-3 mb-4">
+      <div class="glass-card p-3 mb-4 z-[1]">
         <div class="flex flex-wrap items-center gap-3">
           <div class="flex items-center gap-1">
             <button id="btnSearchEstu" class="px-3 py-2 bg-[#543391] hover:bg-[#6f4ab3] text-white rounded-lg transition-all text-sm flex items-center gap-1" title="Buscar">
@@ -844,7 +844,7 @@ class ControlEstudiantesModule {
               <button id="btnFilterStatus" class="px-3 py-2 border border-gray-200 hover:bg-gray-50 rounded-lg text-sm flex items-center gap-1 transition-all">
                 <i class="bi bi-funnel"></i> <span id="filterStatusLabel">Filtros</span>
               </button>
-              <div id="filterStatusDropdown" class="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg min-w-[160px] hidden overflow-hidden">
+              <div id="filterStatusDropdown" class="absolute top-full left-0 mt-1 z-[1055] bg-white border border-gray-200 rounded-xl shadow-lg min-w-[160px] hidden overflow-hidden">
                 <a class="block px-4 py-2 text-sm hover:bg-[#543391]/5 cursor-pointer" data-filter="f0">Activos</a>
                 <a class="block px-4 py-2 text-sm hover:bg-[#543391]/5 cursor-pointer" data-filter="f1">Inactivos</a>
                 <a class="block px-4 py-2 text-sm hover:bg-[#543391]/5 cursor-pointer" data-filter="f2">Desertores</a>
@@ -859,7 +859,7 @@ class ControlEstudiantesModule {
               <button id="btnFilterSede" class="px-3 py-2 border border-gray-200 hover:bg-gray-50 rounded-lg text-sm flex items-center gap-1 transition-all">
                 <i class="bi bi-building"></i> <span id="filterSedeLabel">Sede</span>
               </button>
-              <div id="filterSedeDropdown" class="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg min-w-[180px] hidden overflow-hidden">
+              <div id="filterSedeDropdown" class="absolute top-full left-0 mt-1 z-[1055] bg-white border border-gray-200 rounded-xl shadow-lg min-w-[180px] hidden overflow-hidden">
                 <div id="filterSedeList"></div>
                 <hr class="my-1 border-gray-100">
                 <a class="block px-4 py-2 text-sm hover:bg-[#543391]/5 cursor-pointer text-red-500" data-sede="fb">Borrar Filtro</a>
@@ -870,7 +870,7 @@ class ControlEstudiantesModule {
               <button id="btnFilterGrado" class="px-3 py-2 border border-gray-200 hover:bg-gray-50 rounded-lg text-sm flex items-center gap-1 transition-all">
                 <i class="bi bi-mortarboard"></i> <span id="filterGradoLabel">Grados</span>
               </button>
-              <div id="filterGradoDropdown" class="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg min-w-[160px] hidden overflow-hidden">
+              <div id="filterGradoDropdown" class="absolute top-full left-0 mt-1 z-[1055] bg-white border border-gray-200 rounded-xl shadow-lg min-w-[160px] hidden overflow-hidden">
                 <div id="filterGradoList"></div>
                 <hr class="my-1 border-gray-100">
                 <a class="block px-4 py-2 text-sm hover:bg-[#543391]/5 cursor-pointer text-red-500" data-grado="fb">Borrar Filtro</a>
@@ -938,7 +938,7 @@ class ControlEstudiantesModule {
           </table>
         </div>
         <div id="controlEstuSpinner" class="hidden flex justify-center py-6">
-          <div class="w-10 h-10 border-4 border-[#543391] border-t-transparent rounded-full animate-spin"></div>
+          <span data-orb="working" data-orb-size="44" class="inline-block" style="width:44px;height:44px"></span>
         </div>
         <!-- ── Pagination ── -->
         <div id="controlEstuPager" class="hidden flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-gray-100 bg-gray-50/60">
@@ -982,7 +982,7 @@ class ControlEstudiantesModule {
     if (!tbody) return;
     if (spinner) spinner.classList.remove('hidden');
 
-    tbody.innerHTML = '<tr><td colspan="15" class="text-center py-8"><div class="w-8 h-8 border-4 border-[#543391] border-t-transparent rounded-full animate-spin mx-auto"></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="15" class="text-center py-8"><span data-orb="working" data-orb-size="36" class="inline-block mx-auto" style="width:36px;height:36px"></span></td></tr>';
 
     try {
       const allStudents = await this._fetchAllStudents(year);
@@ -1043,16 +1043,13 @@ class ControlEstudiantesModule {
     const sf = this.activeFilters.status;
     if (sf === 'f0') filtered = filtered.filter(s => s.activo === 'S' || s.activo === '1');
     else if (sf === 'f1') filtered = filtered.filter(s => s.activo === 'N' || s.activo === '0');
-    else if (sf === 'f2') filtered = filtered.filter(s => s.desertor === 'S' || s.activo === 'D');
+    else if (sf === 'f2') filtered = filtered.filter(s => s.desertor === 'S' || s.desertor === '1');
     else if (sf === 'f3') filtered = filtered.filter(s => s.banda === 'S' || s.banda === '1');
-    else if (sf === 'f4') filtered = filtered.filter(s => s.HED === 'S');
+    else if (sf === 'f4') filtered = filtered.filter(s => s.HED === 'S' || s.HED === '1');
 
     // Sede filter
     if (this.activeFilters.sede) {
-      filtered = filtered.filter(s => {
-        const sedeName = s.sede || '';
-        return sedeName.includes(this.activeFilters.sede);
-      });
+      filtered = filtered.filter(s => (s.sede || '') === this.activeFilters.sede);
     }
 
     // Grado filter
@@ -1359,7 +1356,7 @@ class ControlEstudiantesModule {
       container.innerHTML = `
         <div class="hist-state">
           <div class="hist-state-icon" style="background:linear-gradient(135deg,#54339118,#6d49b820)">
-            <div class="w-7 h-7 border-[3px] border-[#543391] border-t-transparent rounded-full animate-spin"></div>
+            <span data-orb="working" data-orb-size="30" class="inline-block" style="width:30px;height:30px"></span>
           </div>
           <div class="hist-state-title">Cargando historial...</div>
           <div class="hist-state-desc">Obteniendo registros académicos del estudiante</div>
@@ -1550,6 +1547,9 @@ class ControlEstudiantesModule {
         if (label) label.textContent = nsede;
         this._renderGradoFilters(sedeId, nsede);
       }
+      this.activeFilters.grado = null;
+      const gradoLabel = $('filterGradoLabel');
+      if (gradoLabel) gradoLabel.textContent = 'Grados';
       $('filterSedeDropdown')?.classList.add('hidden');
       if (this.students.length > 0) this._applyFiltersAndRender();
     });
@@ -1792,7 +1792,7 @@ class ControlEstudiantesModule {
     <div class="flex-1 bg-gray-100 p-4 min-h-0 relative">
       <div id="pdfLoadingOverlay" class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-xl z-10">
         <div class="text-center">
-          <div class="w-10 h-10 border-4 border-[#543391] border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <span data-orb="working" data-orb-size="44" class="inline-block mx-auto" style="width:44px;height:44px"></span>
           <p class="text-sm text-gray-500 mt-3">Cargando PDF...</p>
         </div>
       </div>
