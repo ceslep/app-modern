@@ -64,22 +64,36 @@ class ConvivenciaController
         $year = date('Y');
 
         $stmt = $this->db->prepare("
-            INSERT INTO convivencia (estudiante, docente, asignatura, tipoFalta, faltas,
-                hora, fecha, descripcionSituacion, descargosEstudiante, positivos,
-                firma, firmaAcudiente, infoFirmaAcudiente, device, year)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', '', '', '', ?)
+            INSERT INTO convivencia (estudiante, docente, asignatura, tipoFalta, categoria,
+                impacto, esNEE, tipoNEE, faltas, hora, fecha, descripcionSituacion,
+                descargosEstudiante, positivos, accionesInmediatas, planSeguimiento,
+                derivacion, compromisos, contactoEntidades,
+                firma, firmaEstudiante, firmaAcudiente, infoFirmaAcudiente, device, year)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', '', ?, ?)
         ");
         $stmt->execute([
             $data->estudiante,
             $docente,
             $data->asignatura ?? '',
             $data->tipoFalta,
+            $data->categoria ?? '',
+            $data->impacto ?? 'bajo',
+            $data->esNEE ?? 0,
+            $data->tipoNEE ?? 'ninguno',
             $data->faltas ?? '',
             $data->hora ?? '',
             $data->fecha,
             $data->descripcionSituacion,
             $data->descargosEstudiante ?? '',
             $data->positivos ?? '',
+            $data->accionesInmediatas ?? '',
+            $data->planSeguimiento ?? '',
+            $data->derivacion ?? 'ninguna',
+            $data->compromisos ?? '',
+            $data->contactoEntidades ?? '',
+            $data->firma ?? '',
+            $data->firmaEstudiante ?? '',
+            $data->firmaAcudiente ?? '',
             $year,
         ]);
 

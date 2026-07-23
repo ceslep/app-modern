@@ -3,6 +3,7 @@ import 'jspdf-autotable';
 import SignaturePad from 'signature_pad';
 import { students } from '@services/students.js';
 import { filters } from '@services/filters.js';
+import { convivencia } from '@services/convivencia.js';
 import { endpoint } from '@config/endpoints.js';
 import { $, delegate, escapeHtml } from '@utils/dom.js';
 import { alertSuccess, alertError, alertWarning, alertConfirm, showToast } from '@utils/alert.js';
@@ -515,7 +516,7 @@ class ConvivenciaModule {
             const code = s.estudiante || s.codigo || '';
             const nivel = s.nivel || '';
             const numero = s.numero || '';
-            const val = escapeHtml(JSON.stringify({ codigo: code, nombres: name, grado: nivel + '-' + numero, nivel, numero }));
+            const val = encodeURIComponent(JSON.stringify({ codigo: code, nombres: name, grado: nivel + '-' + numero, nivel, numero }));
             const checked = estudiantes.some((e) => e.codigo === code);
             return `
               <label class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all cursor-pointer hover:bg-purple-50 ${checked ? 'bg-purple-50 border border-purple-200' : 'border border-transparent'}">
@@ -892,8 +893,12 @@ class ConvivenciaModule {
 
   renderBotones() {
     return `
+      <button type="button" id="obsSaveBD"
+        class="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all">
+        <i class="bi bi-database-check mr-1"></i> GUARDAR EN BD
+      </button>
       <button type="button" id="obsGeneratePDF"
-        class="w-full py-4 rounded-2xl bg-gradient-to-r from-[#543391] to-purple-600 text-white font-black text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all">
+        class="w-full py-4 rounded-2xl bg-gradient-to-r from-[#543391] to-purple-600 text-white font-black text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all mt-3">
         📄 GENERAR REPORTE PDF
       </button>
     `;
@@ -956,7 +961,7 @@ class ConvivenciaModule {
           </div>
           <div class="p-6">
             <p class="text-xs text-gray-400 mb-4">Dibuje su firma en el espacio de abajo:</p>
-            <canvas id="obsFirmaCanvas" width="600" height="200"
+            <canvas id="obsFirmaCanvas"
               class="w-full h-[200px] bg-white rounded-xl border-2 border-gray-300 cursor-crosshair touch-none shadow-inner"></canvas>
           </div>
           <div class="p-4 bg-gray-50 border-t border-gray-100 flex justify-center gap-4">
@@ -978,22 +983,27 @@ class ConvivenciaModule {
   setupEvents() {
     const container = $(CONTAINER_ID);
     if (!container) return;
+    const fresh = container.cloneNode(true);
+    container.parentNode.replaceChild(fresh, container);
 
-    delegate(container, 'click', '#obsToggleHistory', () => {
+    delegate(fresh, 'click', '#obsToggleHistory', () => {
+      this.syncTextareaToRecord();
       this.showHistory = !this.showHistory;
       this.render();
       this.syncFormFromState();
       this.setupEvents();
     });
 
-    delegate(container, 'click', '#obsToggleLegal', () => {
+    delegate(fresh, 'click', '#obsToggleLegal', () => {
+      this.syncTextareaToRecord();
       this.showLegalInfo = !this.showLegalInfo;
       this.render();
       this.syncFormFromState();
       this.setupEvents();
     });
 
-    delegate(container, 'click', '#obsClearAll', () => {
+    delegate(fresh, 'click', '#obsClearAll', () => {
+      this.syncTextareaToRecord();
       if (confirm('¿Limpiar todo el formulario?')) {
         localStorage.removeItem('observador_draft');
         this.record = this.getDefaultRecord();
@@ -1004,32 +1014,36 @@ class ConvivenciaModule {
       }
     });
 
-    delegate(container, 'click', '#obsClosePreview', () => {
+    delegate(fresh, 'click', '#obsClosePreview', () => {
+      this.syncTextareaToRecord();
       this.showPreview = false;
       this.render();
       this.syncFormFromState();
       this.setupEvents();
     });
 
-    delegate(container, 'click', '#obsCloseFirma', () => {
+    delegate(fresh, 'click', '#obsCloseFirma', () => {
+      this.syncTextareaToRecord();
       this.firmaModal.open = false;
       this.render();
       this.syncFormFromState();
       this.setupEvents();
     });
 
-    delegate(container, 'click', '#obsCancelFirma', () => {
+    delegate(fresh, 'click', '#obsCancelFirma', () => {
+      this.syncTextareaToRecord();
       this.firmaModal.open = false;
       this.render();
       this.syncFormFromState();
       this.setupEvents();
     });
 
-    delegate(container, 'click', '#obsClearFirma', () => {
+    delegate(fresh, 'click', '#obsClearFirma', () => {
       if (this.signaturePad) this.signaturePad.clear();
     });
 
-    delegate(container, 'click', '#obsSaveFirma', () => {
+    delegate(fresh, 'click', '#obsSaveFirma', () => {
+      this.syncTextareaToRecord();
       if (this.signaturePad && !this.signaturePad.isEmpty()) {
         const dataUrl = this.signaturePad.toDataURL('image/png');
         if (this.firmaModal.tipo === 'docente') this.record.firmaDocente = dataUrl;
@@ -1043,11 +1057,11 @@ class ConvivenciaModule {
       this.setupEvents();
     });
 
-    delegate(container, 'click', '#obsLoadStudents', () => {
+    delegate(fresh, 'click', '#obsLoadStudents', () => {
       this.loadStudentList();
     });
 
-    delegate(container, 'click', '#obsClearStudent', () => {
+    delegate(fresh, 'click', '#obsClearStudent', () => {
       this.record.estudiante = { codigo: '', nombres: '', grado: '', nivel: '', numero: '', sede: '' };
       this.record.estudiantes = [];
       this._filterStudents = [];
@@ -1057,8 +1071,8 @@ class ConvivenciaModule {
       this.setupEvents();
     });
 
-    delegate(container, 'change', '[data-student-checkbox]', (e, target) => {
-      const est = (() => { try { return JSON.parse(target.value); } catch { return null; } })();
+    delegate(fresh, 'change', '[data-student-checkbox]', (e, target) => {
+      const est = (() => { try { return JSON.parse(decodeURIComponent(target.value)); } catch { return null; } })();
       if (!est) return;
       if (target.checked) {
         this.record.estudiantes = [...this.record.estudiantes, est];
@@ -1072,7 +1086,7 @@ class ConvivenciaModule {
       this.setupEvents();
     });
 
-    delegate(container, 'click', '[data-remove-student]', (e, target) => {
+    delegate(fresh, 'click', '[data-remove-student]', (e, target) => {
       const codigo = target.dataset.removeStudent;
       this.record.estudiantes = this.record.estudiantes.filter((e) => e.codigo !== codigo);
       if (this.record.estudiantes.length > 0) {
@@ -1086,11 +1100,16 @@ class ConvivenciaModule {
       this.setupEvents();
     });
 
-    delegate(container, 'click', '#obsGeneratePDF', () => {
+    delegate(fresh, 'click', '#obsSaveBD', () => {
+      this.saveToDatabase();
+    });
+
+    delegate(fresh, 'click', '#obsGeneratePDF', () => {
       this.generatePDF();
     });
 
-    delegate(container, 'click', '[data-tipo]', (e, target) => {
+    delegate(fresh, 'click', '[data-tipo]', (e, target) => {
+      this.syncTextareaToRecord();
       const tipo = target.dataset.tipo;
       this.record.tipo = tipo;
       const cats = CATEGORIAS[tipo];
@@ -1101,7 +1120,8 @@ class ConvivenciaModule {
       this.setupEvents();
     });
 
-    delegate(container, 'click', '[data-categoria]', (e, target) => {
+    delegate(fresh, 'click', '[data-categoria]', (e, target) => {
+      this.syncTextareaToRecord();
       this.record.categoria = target.dataset.categoria;
       this.saveDraft();
       this.render();
@@ -1109,7 +1129,8 @@ class ConvivenciaModule {
       this.setupEvents();
     });
 
-    delegate(container, 'click', '[data-impacto]', (e, target) => {
+    delegate(fresh, 'click', '[data-impacto]', (e, target) => {
+      this.syncTextareaToRecord();
       this.record.impacto = target.dataset.impacto;
       this.saveDraft();
       this.render();
@@ -1117,7 +1138,8 @@ class ConvivenciaModule {
       this.setupEvents();
     });
 
-    delegate(container, 'click', '[data-accion]', (e, target) => {
+    delegate(fresh, 'click', '[data-accion]', (e, target) => {
+      this.syncTextareaToRecord();
       const id = target.dataset.accion;
       this.toggleAccion(id);
       this.saveDraft();
@@ -1126,26 +1148,28 @@ class ConvivenciaModule {
       this.setupEvents();
     });
 
-    delegate(container, 'change', '[data-accion-check]', (e, target) => {
+    delegate(fresh, 'change', '[data-accion-check]', (e, target) => {
       const id = target.dataset.accionCheck;
       this.toggleAccion(id);
       this.saveDraft();
     });
 
-    delegate(container, 'click', '[data-plan]', (e, target) => {
+    delegate(fresh, 'click', '[data-plan]', (e, target) => {
       const plan = PLANES_SEGUIMIENTO.find((p) => p.id === target.dataset.plan);
       if (plan) {
+        const tp = document.getElementById('obsPlanSeguimiento');
+        if (tp) this.record.planSeguimiento = tp.value;
         this.record.planSeguimiento += (this.record.planSeguimiento ? '\n- ' : '- ') + plan.desc;
         this.saveDraft();
-        const ta = document.getElementById('obsPlanSeguimiento');
-        if (ta) ta.value = this.record.planSeguimiento;
+        if (tp) tp.value = this.record.planSeguimiento;
       }
     });
 
-    delegate(container, 'click', '[data-insert-text]', (e, target) => {
+    delegate(fresh, 'click', '[data-insert-text]', (e, target) => {
       const key = target.dataset.insertText;
       const texto = TEXTOS_ASISTENTE[key];
       if (texto) {
+        this.syncTextareaToRecord();
         this.record.descripcion += (this.record.descripcion ? '\n' : '') + texto;
         this.saveDraft();
         const ta = document.getElementById('obsDescripcion');
@@ -1153,7 +1177,8 @@ class ConvivenciaModule {
       }
     });
 
-    delegate(container, 'click', '[data-asistente-tab]', (e, target) => {
+    delegate(fresh, 'click', '[data-asistente-tab]', (e, target) => {
+      this.syncTextareaToRecord();
       const id = target.dataset.asistenteTab;
       this.activeTab = this.activeTab === id ? null : id;
       this.render();
@@ -1161,7 +1186,7 @@ class ConvivenciaModule {
       this.setupEvents();
     });
 
-    delegate(container, 'click', '[data-legal-section]', (e, target) => {
+    delegate(fresh, 'click', '[data-legal-section]', (e, target) => {
       const id = target.dataset.legalSection;
       this.activeLegalSection = this.activeLegalSection === id ? null : id;
       this.render();
@@ -1169,7 +1194,8 @@ class ConvivenciaModule {
       this.setupEvents();
     });
 
-    delegate(container, 'click', '#obsOpenItemsModal', () => {
+    delegate(fresh, 'click', '#obsOpenItemsModal', () => {
+      this.syncTextareaToRecord();
       this.showItemsModal = true;
       this.itemsList = [];
       this.loadItemsFromBackend();
@@ -1178,16 +1204,18 @@ class ConvivenciaModule {
       this.setupEvents();
     });
 
-    delegate(container, 'click', '#obsCloseItemsModal', () => {
+    delegate(fresh, 'click', '#obsCloseItemsModal', () => {
+      this.syncTextareaToRecord();
       this.showItemsModal = false;
       this.render();
       this.syncFormFromState();
       this.setupEvents();
     });
 
-    delegate(container, 'click', '[data-items-select]', (e, target) => {
+    delegate(fresh, 'click', '[data-items-select]', (e, target) => {
       const text = target.dataset.itemsSelect;
       if (text) {
+        this.syncTextareaToRecord();
         this.record.descripcion += (this.record.descripcion ? '\n' : '') + '• ' + text;
         this.saveDraft();
       }
@@ -1197,7 +1225,7 @@ class ConvivenciaModule {
       this.setupEvents();
     });
 
-    delegate(container, 'click', '[data-firma-tipo]', (e, target) => {
+    delegate(fresh, 'click', '[data-firma-tipo]', (e, target) => {
       this.firmaModal = { open: true, tipo: target.dataset.firmaTipo };
       this.render();
       this.syncFormFromState();
@@ -1205,7 +1233,7 @@ class ConvivenciaModule {
       this.initSignaturePad();
     });
 
-    delegate(container, 'click', '[data-borrar-firma]', (e, target) => {
+    delegate(fresh, 'click', '[data-borrar-firma]', (e, target) => {
       const tipo = target.dataset.borrarFirma;
       if (tipo === 'docente') this.record.firmaDocente = null;
       else if (tipo === 'estudiante') this.record.firmaEstudiante = null;
@@ -1339,6 +1367,9 @@ class ConvivenciaModule {
 
     numeroSel.addEventListener('change', () => {
       this._savedFilterNumero = numeroSel.value;
+      if (sedeSel.value && nivelSel.value && numeroSel.value) {
+        this.loadStudentList();
+      }
     });
   }
 
@@ -1392,6 +1423,17 @@ class ConvivenciaModule {
     // search replaced by <select multiple> — kept for compat
   }
 
+  syncTextareaToRecord() {
+    const ta = document.getElementById('obsDescripcion');
+    if (ta) this.record.descripcion = ta.value;
+    const tp = document.getElementById('obsPlanSeguimiento');
+    if (tp) this.record.planSeguimiento = tp.value;
+    const tc = document.getElementById('obsContactos');
+    if (tc) this.record.contactoEntidades = tc.value;
+    const tx = document.getElementById('obsCompromisos');
+    if (tx) this.record.compromisos = tx.value;
+  }
+
   syncFormFromState() {
     const desc = document.getElementById('obsDescripcion');
     if (desc) desc.value = this.record.descripcion;
@@ -1428,20 +1470,19 @@ class ConvivenciaModule {
       this.firmaCanvas = canvas;
 
       const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * 2;
-      canvas.height = rect.height * 2;
+      canvas.width = rect.width;
+      canvas.height = rect.height;
 
       if (this.signaturePad) {
-        this.signaturePad.clear();
-      } else {
-        this.signaturePad = new SignaturePad(canvas, {
-          penColor: '#1e293b',
-          backgroundColor: 'rgb(255,255,255)',
-          minWidth: 1,
-          maxWidth: 3,
-          throttle: 0,
-        });
+        this.signaturePad.off();
       }
+      this.signaturePad = new SignaturePad(canvas, {
+        penColor: '#1e293b',
+        backgroundColor: 'rgb(255,255,255)',
+        minWidth: 1,
+        maxWidth: 3,
+        throttle: 0,
+      });
     }, 100);
   }
 
@@ -1465,6 +1506,51 @@ class ConvivenciaModule {
     try {
       localStorage.setItem('observador_historial', JSON.stringify(this.historial));
     } catch (e) { /* ignore */ }
+  }
+
+  async saveToDatabase() {
+    const primerEstudiante = this.record.estudiantes.length > 0
+      ? this.record.estudiantes[0]
+      : this.record.estudiante;
+    const codigoEstudiante = primerEstudiante?.codigo || primerEstudiante?.estudiante || '';
+    if (!codigoEstudiante) {
+      alertWarning('Seleccione estudiante', 'Debe seleccionar al menos un estudiante');
+      return;
+    }
+    if (!this.record.descripcion || this.record.descripcion.length < 5) {
+      alertWarning('Descripción requerida', 'Ingrese una descripción de los hechos');
+      return;
+    }
+
+    const tipoMap = { positivo: 'POSITIVO', tipo1: 'TIPO I', tipo2: 'TIPO II', tipo3: 'TIPO III' };
+
+    const payload = {
+      estudiante: codigoEstudiante,
+      tipoFalta: tipoMap[this.record.tipo] || this.record.tipo,
+      fecha: this.record.fecha,
+      categoria: this.record.categoria,
+      impacto: this.record.impacto,
+      esNEE: this.record.esNEE ? 1 : 0,
+      tipoNEE: this.record.tipoNEE,
+      descripcionSituacion: this.record.descripcion,
+      accionesInmediatas: JSON.stringify(this.record.accionesInmediatas),
+      planSeguimiento: this.record.planSeguimiento,
+      derivacion: this.record.derivacion,
+      compromisos: this.record.compromisos,
+      contactoEntidades: this.record.contactoEntidades,
+      firma: this.record.firmaDocente || '',
+      firmaEstudiante: this.record.firmaEstudiante || '',
+      firmaAcudiente: this.record.firmaAcudiente || '',
+    };
+
+    try {
+      await convivencia.create(payload);
+      this.guardarEnHistorial();
+      alertSuccess('Guardado', 'Registro de convivencia guardado exitosamente en la base de datos');
+    } catch (err) {
+      console.error('Error saving convivencia:', err);
+      alertError('Error al guardar', err?.message || 'No se pudo guardar el registro');
+    }
   }
 
   async generatePDF() {
