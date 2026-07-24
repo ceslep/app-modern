@@ -59,6 +59,14 @@ class ApiService {
     let url;
     if (options.modern || !isLegacy()) {
       url = `${this.baseUrl}/${endpoint}`;
+      if (options.params) {
+        const qs = new URLSearchParams();
+        for (const [k, v] of Object.entries(options.params)) {
+          if (v !== undefined && v !== null) qs.set(k, v);
+        }
+        const qsStr = qs.toString();
+        if (qsStr) url += `?${qsStr}`;
+      }
     } else {
       const params = new URLSearchParams();
       params.set('__api', endpoint);
@@ -129,12 +137,12 @@ class ApiService {
     }
   }
 
-  get(endpoint, params = {}) {
-    return this.request(endpoint, { method: 'GET', params });
+  get(endpoint, params = {}, opts = {}) {
+    return this.request(endpoint, { method: 'GET', params, ...opts });
   }
 
-  post(endpoint, body = {}) {
-    return this.request(endpoint, { method: 'POST', body });
+  post(endpoint, body = {}, opts = {}) {
+    return this.request(endpoint, { method: 'POST', body, ...opts });
   }
 
   put(endpoint, body = {}) {

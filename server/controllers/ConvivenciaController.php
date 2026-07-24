@@ -16,7 +16,7 @@ class ConvivenciaController
      */
     public function index(): void
     {
-        $estudiante = getQueryParam('estudiante');
+        $estudiante = getQueryParam('estudiante') ?: getQueryParam('student');
         $asignacion = getQueryParam('asignacion');
         $nivel = getQueryParam('nivel');
         $numero = getQueryParam('numero');
@@ -38,11 +38,18 @@ class ConvivenciaController
 
         $stmt = $this->db->prepare("
             SELECT c.ind, c.estudiante, c.docente, c.asignatura, c.tipoFalta,
+                   c.categoria, c.impacto, c.esNEE, c.tipoNEE,
+                   c.accionesInmediatas, c.planSeguimiento, c.derivacion,
+                   c.compromisos, c.contactoEntidades,
                    c.faltas, c.hora, c.fecha, c.descripcionSituacion,
-                   c.descargosEstudiante, c.positivos, c.fechahora,
-                   e.nombres
+                   c.descargosEstudiante, c.positivos, c.fechahora, c.year,
+                   c.firma, c.firmaEstudiante, c.firmaAcudiente,
+                   e.nombres,
+                   CONCAT_WS('-', e.nivel, e.numero) AS grupo,
+                   d.nombres AS docenteNombre
             FROM convivencia c
             INNER JOIN estugrupos e ON c.estudiante = e.estudiante AND e.anio = c.year
+            LEFT JOIN docentes d ON c.docente = d.identificacion
             $join
             WHERE $where
             ORDER BY c.fecha DESC, c.fechahora DESC
@@ -50,6 +57,45 @@ class ConvivenciaController
         ");
         $stmt->execute($params);
         success($stmt->fetchAll());
+    }
+
+    /**
+     * POST /convivencia/student-detail - Full records for one student
+     */
+    public function studentDetail(): void
+    {
+        $data = getJsonInput();
+        $estudiante = $data->estudiante ?? '';
+        $year = $data->year ?? date('Y');
+        if (!$estudiante) {
+            error('ID de estudiante requerido');
+        }
+
+        $stmt = $this->db->prepare("
+            SELECT c.ind, c.estudiante, eg.nombres,
+                   CONCAT_WS('-', eg.nivel, eg.numero) AS grupo,
+                   s.sede AS sede,
+                   d.nombres AS docente,
+                   c.asignatura, c.fecha,
+                   IF(c.hora <> '', c.hora, SUBSTRING(c.fechahora, 11, 8)) AS hora,
+                   c.tipoFalta, c.categoria, c.impacto, c.esNEE, c.tipoNEE,
+                   c.faltas, c.descripcionSituacion, c.descargosEstudiante, c.positivos,
+                   c.accionesInmediatas, c.planSeguimiento, c.derivacion,
+                   c.compromisos, c.contactoEntidades,
+                   c.firma, c.firmaEstudiante, c.firmaAcudiente, c.fechahora, c.year
+            FROM convivencia c
+            JOIN estugrupos eg ON c.estudiante = eg.estudiante AND eg.year = c.year
+            LEFT JOIN sedes s ON eg.asignacion = s.ind
+            LEFT JOIN docentes d ON c.docente = d.identificacion
+            WHERE c.estudiante = ? AND c.year = ?
+            ORDER BY c.fechahora DESC
+        ");
+        $stmt->execute([$estudiante, $year]);
+        $rows = $stmt->fetchAll();
+        foreach ($rows as &$row) {
+            $row['firmado'] = !empty($row['firma']) ? '1' : '0';
+        }
+        success($rows);
     }
 
     /**
@@ -190,7 +236,7 @@ class ConvivenciaController
                 CONCAT_WS('-', MAX(g.nivel), MAX(g.numero)) AS grupo,
                 MAX(g.nivel) AS nivel,
                 MAX(g.numero) AS numero,
-                '' AS sede,
+                MAX(s.sede) AS sede,
                 SUM(CASE WHEN LOWER(c.tipoFalta) LIKE '%positivo%' THEN 1 ELSE 0 END) AS POSITIVO,
                 SUM(CASE WHEN LOWER(c.tipoFalta) LIKE '%tipo i%' OR LOWER(c.tipoFalta) = 'tipo1' THEN 1 ELSE 0 END) AS `TIPO I`,
                 SUM(CASE WHEN LOWER(c.tipoFalta) LIKE '%tipo ii%' OR LOWER(c.tipoFalta) = 'tipo2' THEN 1 ELSE 0 END) AS `TIPO II`,
@@ -198,6 +244,7 @@ class ConvivenciaController
                 COUNT(*) AS total
             FROM convivencia c
             INNER JOIN estugrupos g ON c.estudiante = g.estudiante AND g.anio = c.year
+            LEFT JOIN sedes s ON g.asignacion = s.ind
             WHERE $where
             GROUP BY c.estudiante
             ORDER BY total DESC, g.nombres ASC
@@ -206,23 +253,14 @@ class ConvivenciaController
         $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
-        // Map sede names
-        $sedes = [];
-        if ($asignacion) {
-            $sedeStmt = $this->db->prepare("SELECT ind, sede FROM sedes WHERE ind = ?");
-            $sedeStmt->execute([$asignacion]);
-            $sedeRow = $sedeStmt->fetch();
-            if ($sedeRow) $sedes[$sedeRow['ind']] = $sedeRow['sede'];
-        }
-
-        $data = array_map(function ($r) use ($sedes) {
+        $data = array_map(function ($r) {
             return [
                 'estudiante' => $r['estudiante'],
                 'nombres' => $r['nombres'],
                 'grupo' => $r['grupo'],
                 'nivel' => $r['nivel'],
                 'numero' => $r['numero'],
-                'sede' => $sedes[$r['sede']] ?? $r['sede'] ?? '',
+                'sede' => $r['sede'] ?? '',
                 'positivo' => (int) $r['POSITIVO'],
                 'tipo1' => (int) $r['TIPO I'],
                 'tipo2' => (int) $r['TIPO II'],

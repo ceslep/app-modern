@@ -1,5 +1,4 @@
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
 import { convivencia } from '@services/convivencia.js';
 import { filters } from '@services/filters.js';
 import { escapeHtml, $, delegate } from '@utils/dom.js';
@@ -12,6 +11,18 @@ function decodeHtmlEntities(str) {
 }
 import { showToast } from '@utils/alert.js';
 
+// Loader institucional global (<ie-occidente-loader> definido en index.html).
+// Fallback silencioso si aún no está montado.
+function ieLoaderShow(text) {
+  const el = window.IELoader?.el;
+  if (!el) return;
+  if (text) el.setAttribute('text', text);
+  window.IELoader.show();
+}
+function ieLoaderHide() {
+  window.IELoader?.hide();
+}
+
 const SECTION_ID = 'seccionConsolidadoConvivencia';
 const CONTAINER_ID = 'contenedorConsolidadoConvivencia';
 
@@ -21,6 +32,52 @@ const TIPO_COLORS = {
   tipo2: { bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-500', label: 'Tipo II' },
   tipo3: { bg: 'bg-rose-100', text: 'text-rose-700', dot: 'bg-rose-500', label: 'Tipo III' },
 };
+
+// Label maps mirroring src/modules/convivencia.js (new convivencia table fields)
+const CATEGORIA_LABELS = {
+  merito_academico: 'Mérito Académico', convivencia: 'Buena Convivencia', solidaridad: 'Solidaridad',
+  esfuerzo: 'Esfuerzo', logro_deportivo: 'Logro Deportivo', creatividad: 'Creatividad',
+  liderazgo: 'Liderazgo', mejora: 'Mejora Significativa',
+  tarea_olvidada: 'Tarea/Olvido materiales', uniforme: 'Uniforme incompleto', celular: 'Uso indebido celular',
+  falta_respeto_leve: 'Falta de respeto leve', consumo_alimentos: 'Consumo alimentos', retraso: 'Llegada tarde',
+  interrupcion: 'Interrupción clase',
+  agresion_verbal: 'Agresión verbal', ciberacoso: 'Ciberacoso', danio_propiedad: 'Daño a propiedad',
+  mentira: 'Engaño/Mentira', agresion_fisica_leve: 'Agresión física leve', robo: 'Hurto menor', insulto: 'Insulto grave',
+  armas: 'Portación armas', sustancias: 'Sustancias psicoactivas', extorsion: 'Extorsión',
+  agresion_fisica: 'Agresión física grave', actividades_ilicitas: 'Actividades ilícitas',
+  acoso_sexual: 'Acoso sexual', vandalismo: 'Vandalismo',
+};
+const IMPACTO_LABELS = { bajo: 'Bajo', medio: 'Medio', alto: 'Alto' };
+const NEE_LABELS = {
+  visual: 'Visual', auditiva: 'Auditiva', motora: 'Motora', cognitiva: 'Cognitiva',
+  emocional: 'Emocional', autismo: 'TEA', tdah: 'TDAH', ninguno: 'Ninguno',
+};
+const DERIVACION_LABELS = {
+  ninguna: 'Ninguna - Seguimiento docente', orientacion: 'Orientación Escolar',
+  coordinacion: 'Coordinación Académica', rectoria: 'Rectoría',
+  psicologia: 'Referencia externa (Psicología)', icbf: 'ICBF / Bienestar Familiar',
+  comite_convivencia: 'Comité de Convivencia',
+};
+const ACCION_LABELS = {
+  llamada_padre: 'Comunicación inmediata al padre/acudiente', remision_orientacion: 'Remisión a Orientación Escolar',
+  cita_coordinacion: 'Cita con Coordinación', remision_rectoria: 'Remisión a Rectoría',
+  citacion_padres: 'Citación formal a padres', primeros_auxilios: 'Primeros auxilios / Atención médica',
+  protocolo_icbf: 'Activación protocolo ICBF', comisaria_familia: 'Notificación a Comisaría de Familia',
+  policia_infancia: 'Policía de Infancia y Adolescencia', hospital: 'Remisión a Hospital / Centro de Salud',
+  enfermeria: 'Atención de Enfermería Institucional', psicologia: 'Derivación a Psicología',
+  denuncia_penal: 'Denuncia ante Fiscalía', ninguna: 'Ninguna acción inmediata',
+};
+
+// Parse accionesInmediatas (JSON array of ids) → array of human labels
+function parseAcciones(raw) {
+  if (!raw) return [];
+  let arr = raw;
+  if (typeof raw === 'string') {
+    try { arr = JSON.parse(raw); } catch { return []; }
+  }
+  if (!Array.isArray(arr)) return [];
+  return arr.map((id) => ACCION_LABELS[id] || id);
+}
 
 class ConsolidadoConvivenciaModule {
   constructor() {
@@ -562,6 +619,22 @@ class ConsolidadoConvivenciaModule {
         tipo.includes('tipo2') || tipo.includes('tipo ii') ? 'bg-amber-100 text-amber-700' :
         tipo.includes('tipo3') || tipo.includes('tipo iii') ? 'bg-rose-100 text-rose-700' : 'bg-gray-100 text-gray-600';
       const idx = (dp - 1) * detailPerPage + pageRecords.indexOf(rec) + 1;
+
+      const catLabel = rec.categoria ? (CATEGORIA_LABELS[rec.categoria] || rec.categoria) : '';
+      const impLabel = rec.impacto ? (IMPACTO_LABELS[rec.impacto] || rec.impacto) : '';
+      const derivLabel = (rec.derivacion && rec.derivacion !== 'ninguna') ? (DERIVACION_LABELS[rec.derivacion] || rec.derivacion) : '';
+      const acciones = parseAcciones(rec.accionesInmediatas);
+      const esNEE = Number(rec.esNEE) === 1;
+      const neeLabel = esNEE && rec.tipoNEE && rec.tipoNEE !== 'ninguno' ? (NEE_LABELS[rec.tipoNEE] || rec.tipoNEE) : '';
+
+      const chip = (txt, cls) => `<span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${cls}">${escapeHtml(txt)}</span>`;
+      const metaChips = [
+        catLabel ? chip(catLabel, 'bg-purple-100 text-purple-700') : '',
+        impLabel ? chip('Impacto: ' + impLabel, 'bg-slate-100 text-slate-600') : '',
+        neeLabel ? chip('NEE: ' + neeLabel, 'bg-indigo-100 text-indigo-700') : '',
+        derivLabel ? chip('→ ' + derivLabel, 'bg-orange-100 text-orange-700') : '',
+      ].filter(Boolean).join(' ');
+
       return `
         <div class="border-l-4 ${colorMap[color]} rounded-r-xl px-4 py-3 text-sm" data-conv-ind="${rec.ind || ''}">
           <div class="flex items-center justify-between gap-2">
@@ -579,8 +652,12 @@ class ConsolidadoConvivenciaModule {
               </button>
             </div>
           </div>
+          ${metaChips ? `<div class="flex flex-wrap gap-1 mt-2">${metaChips}</div>` : ''}
           ${rec.descripcionSituacion ? `<p class="text-xs text-gray-500 mt-1.5 line-clamp-2 leading-relaxed">${escapeHtml(decodeHtmlEntities(rec.descripcionSituacion))}</p>` : ''}
           ${rec.faltas ? `<p class="text-[10px] text-gray-400 mt-1"><span class="font-medium">Faltas:</span> ${escapeHtml(decodeHtmlEntities(rec.faltas))}</p>` : ''}
+          ${acciones.length ? `<p class="text-[10px] text-gray-400 mt-1"><span class="font-medium">Acciones:</span> ${escapeHtml(acciones.join(', '))}</p>` : ''}
+          ${rec.planSeguimiento ? `<p class="text-[10px] text-gray-400 mt-1"><span class="font-medium">Plan:</span> ${escapeHtml(decodeHtmlEntities(rec.planSeguimiento))}</p>` : ''}
+          ${rec.compromisos ? `<p class="text-[10px] text-gray-400 mt-1"><span class="font-medium">Compromisos:</span> ${escapeHtml(decodeHtmlEntities(rec.compromisos))}</p>` : ''}
         </div>
       `;
     }).join('');
@@ -701,24 +778,29 @@ class ConsolidadoConvivenciaModule {
     });
   }
 
-  async printRecord(rec, estudianteId) {
-    const doc = new jsPDF('p', 'mm', 'a4');
+  // Fetch escudo once as dataURL (shared across single/bulk PDF)
+  async _fetchEscudo() {
+    try {
+      const resp = await fetch('escudohd.png');
+      const blob = await resp.blob();
+      return await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // Draw one full individual report onto the current page of `doc`.
+  // Assumes the caller has already added a fresh page (or is on page 1).
+  _drawRecordPage(doc, rec, escudoDataUrl) {
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
     const margin = 15;
     const contentW = pageW - margin * 2;
     let y = 0;
-
-    let escudoDataUrl = null;
-    try {
-      const resp = await fetch('escudohd.png');
-      const blob = await resp.blob();
-      escudoDataUrl = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.readAsDataURL(blob);
-      });
-    } catch (_) { /* escudo not available */ }
 
     if (escudoDataUrl) {
       let escudoFmt = 'JPEG';
@@ -739,17 +821,6 @@ class ConsolidadoConvivenciaModule {
     doc.setDrawColor(84, 51, 145).setLineWidth(0.5).line(margin, 30, pageW - margin, 30);
 
     y = 40;
-
-    const addText = (text, fontSize, fontStyle = 'normal', maxWidth = contentW) => {
-      doc.setFontSize(fontSize);
-      doc.setFont('helvetica', fontStyle);
-      const lines = doc.splitTextToSize(text || '', maxWidth);
-      lines.forEach(line => {
-        if (y > pageH - 20) { doc.addPage(); y = 20; }
-        doc.text(line, margin, y);
-        y += fontSize * 0.5 + 1;
-      });
-    };
 
     const addSection = (label, value) => {
       if (!value) return;
@@ -795,6 +866,11 @@ class ConsolidadoConvivenciaModule {
 
     const tipoLabel = (rec.tipoFalta || '').toUpperCase().includes('POSITIVO') ? 'Tipo de Situación' : 'Tipo de Falta';
     addSection(tipoLabel, rec.tipoFalta || '');
+    if (rec.categoria) addSection('Categoria', CATEGORIA_LABELS[rec.categoria] || rec.categoria);
+    if (rec.impacto) addSection('Nivel de Impacto', IMPACTO_LABELS[rec.impacto] || rec.impacto);
+    if (Number(rec.esNEE) === 1 && rec.tipoNEE && rec.tipoNEE !== 'ninguno') {
+      addSection('Estudiante NEE', NEE_LABELS[rec.tipoNEE] || rec.tipoNEE);
+    }
 
     addSeparator();
 
@@ -803,18 +879,27 @@ class ConsolidadoConvivenciaModule {
     addSection('Descargos del estudiante', decodeHtmlEntities(rec.descargosEstudiante || ''));
     addSection('Otras Observaciones', decodeHtmlEntities(rec.positivos || ''));
 
+    const acciones = parseAcciones(rec.accionesInmediatas);
+    if (acciones.length) addSection('Acciones Inmediatas', acciones.map((a) => '- ' + a).join('\n'));
+    if (rec.derivacion && rec.derivacion !== 'ninguna') {
+      addSection('Derivacion', DERIVACION_LABELS[rec.derivacion] || rec.derivacion);
+    }
+    addSection('Plan de Seguimiento', decodeHtmlEntities(rec.planSeguimiento || ''));
+    addSection('Compromisos del Estudiante', decodeHtmlEntities(rec.compromisos || ''));
+    addSection('Contacto Entidades', decodeHtmlEntities(rec.contactoEntidades || ''));
+
     const drawSignature = (imgBase64, label, x, w) => {
       if (y > pageH - 40) { doc.addPage(); y = 20; }
       if (imgBase64) {
         try {
           let raw = imgBase64;
           let fmt = 'JPEG';
-          if (raw.startsWith('/9j/')) {
-            fmt = 'JPEG';
-          } else if (raw.startsWith('iVBOR')) {
+          if (raw.startsWith('data:image/png') || raw.startsWith('iVBOR')) {
             fmt = 'PNG';
-          } else if (raw.startsWith('UklGR')) {
+          } else if (raw.startsWith('data:image/webp') || raw.startsWith('UklGR')) {
             fmt = 'WEBP';
+          } else if (raw.startsWith('data:image/jpeg') || raw.startsWith('/9j/')) {
+            fmt = 'JPEG';
           }
           if (!raw.startsWith('data:')) raw = `data:image/${fmt.toLowerCase()};base64,${raw}`;
           doc.addImage(raw, fmt, x, y, w, 20);
@@ -827,12 +912,25 @@ class ConsolidadoConvivenciaModule {
     };
 
     y += 10;
-    const sigW = (contentW - 10) / 2;
+    const sigW = (contentW - 20) / 3;
     drawSignature(rec.firma || '', 'Firma del Docente', margin, sigW);
-    drawSignature(rec.firmaAcudiente || '', 'Firma del Acudiente', margin + sigW + 10, sigW);
+    drawSignature(rec.firmaEstudiante || '', 'Firma del Estudiante', margin + sigW + 10, sigW);
+    drawSignature(rec.firmaAcudiente || '', 'Firma del Acudiente', margin + (sigW + 10) * 2, sigW);
+  }
+
+  async printRecord(rec, estudianteId) {
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const escudoDataUrl = await this._fetchEscudo();
+    this._drawRecordPage(doc, rec, escudoDataUrl);
 
     const nombre = (rec.nombres || 'estudiante').replace(/\s+/g, '_');
     const fileName = `Convivencia_${nombre}_${rec.fecha || 'reporte'}.pdf`;
+    this._showPdfModal(doc, fileName);
+    showToast('Vista previa del PDF', 'success');
+  }
+
+  // Show a generated jsPDF doc in a preview modal (iframe) with a download button.
+  _showPdfModal(doc, fileName) {
     const blob = doc.output('blob');
     const url = URL.createObjectURL(blob);
 
@@ -842,7 +940,7 @@ class ConsolidadoConvivenciaModule {
     modal.innerHTML = `
       <div class="bg-white rounded-xl shadow-2xl w-[90vw] max-w-[900px] h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
         <div class="flex items-center justify-between px-5 py-3 border-b bg-gray-50">
-          <h3 class="font-semibold text-gray-800 truncate">${fileName}</h3>
+          <h3 class="font-semibold text-gray-800 truncate">${escapeHtml(fileName)}</h3>
           <div class="flex gap-2 shrink-0">
             <button id="convPdfDownload" class="px-3 py-1.5 bg-[#543391] text-white text-sm rounded-lg hover:bg-[#3d2570] flex items-center gap-1.5">
               <i class="bi bi-download"></i> Descargar
@@ -866,8 +964,6 @@ class ConsolidadoConvivenciaModule {
       a.download = fileName;
       a.click();
     });
-
-    showToast('Vista previa del PDF', 'success');
   }
 
   wireTableEvents() {
@@ -949,63 +1045,38 @@ class ConsolidadoConvivenciaModule {
   }
 
   async exportStudentPdf(estudianteId, nombre) {
+    ieLoaderShow('Generando PDF...');
     try {
-      const res = await convivencia.getByStudent(estudianteId);
-      const records = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
-      const doc = new jsPDF('p', 'mm', 'a4');
-      const pageW = doc.internal.pageSize.getWidth();
-
-      let escudoDataUrl = null;
-      try {
-        const resp = await fetch('escudohd.png');
-        const blob = await resp.blob();
-        escudoDataUrl = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.readAsDataURL(blob);
-        });
-      } catch (_) { /* escudo not available */ }
-
-      if (escudoDataUrl) {
-        doc.addImage(escudoDataUrl, 'PNG', 14, 5, 16, 20);
+      let records = [];
+      // Reuse the already-loaded detail if it belongs to this student
+      if (this.expandedStudent === estudianteId && Array.isArray(this.studentDetail)) {
+        records = this.studentDetail;
+      } else {
+        const res = await convivencia.getStudentDetail(estudianteId);
+        records = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
       }
-
-      doc.setTextColor(30, 30, 30);
-      doc.setFontSize(16);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Consolidado de Convivencia', escudoDataUrl ? 36 : pageW / 2, 18, escudoDataUrl ? { align: 'left' } : { align: 'center' });
-
-      doc.setTextColor(60, 60, 60);
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Estudiante: ${decodeHtmlEntities(nombre)}`, 14, 42);
-      doc.text(`ID: ${estudianteId}`, 14, 50);
 
       if (records.length === 0) {
-        doc.setFontSize(10);
-        doc.text('Sin registros de convivencia', 14, 65);
-      } else {
-        const tableData = records.map((r) => [
-          r.fecha || r.fechahora || '',
-          decodeHtmlEntities(r.tipoFalta || r.tipo || ''),
-          decodeHtmlEntities(r.asignatura || ''),
-          decodeHtmlEntities((r.descripcionSituacion || '').substring(0, 60)),
-        ]);
-        doc.autoTable({
-          startY: 58,
-          head: [['Fecha', 'Tipo', 'Asignatura', 'Descripción']],
-          body: tableData,
-          theme: 'striped',
-          headStyles: { fillColor: [84, 51, 145] },
-          styles: { fontSize: 8 },
-          margin: { top: 50 },
-        });
+        showToast('Sin registros de convivencia', 'warning');
+        return;
       }
 
-      doc.save(`Convivencia_${nombre.replace(/\s+/g, '_')}.pdf`);
-      showToast(`PDF generado: ${nombre}`, 'success');
+      const escudoDataUrl = await this._fetchEscudo();
+      const doc = new jsPDF('p', 'mm', 'a4');
+
+      // Each record → its own full-page individual report, concatenated.
+      records.forEach((rec, i) => {
+        if (i > 0) doc.addPage();
+        this._drawRecordPage(doc, rec, escudoDataUrl);
+      });
+
+      const fileName = `Convivencia_${(nombre || 'estudiante').replace(/\s+/g, '_')}.pdf`;
+      this._showPdfModal(doc, fileName);
+      showToast(`PDF generado: ${records.length} reporte(s)`, 'success');
     } catch (error) {
       showToast('Error al generar PDF', 'error');
+    } finally {
+      ieLoaderHide();
     }
   }
 
@@ -1015,79 +1086,51 @@ class ConsolidadoConvivenciaModule {
       return;
     }
 
+    ieLoaderShow('Generando reporte general...');
     try {
-      const doc = new jsPDF('l', 'mm', 'a4');
-      const pageW = doc.internal.pageSize.getWidth();
+      const escudoDataUrl = await this._fetchEscudo();
+      const doc = new jsPDF('p', 'mm', 'a4');
 
-      let escudoDataUrl = null;
-      try {
-        const resp = await fetch('escudohd.png');
-        const blob = await resp.blob();
-        escudoDataUrl = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.readAsDataURL(blob);
-        });
-      } catch (_) { /* escudo not available */ }
+      // Gather every individual record across all filtered students, then draw
+      // each one as its own full-page report — same layout as the individual PDF.
+      let firstPage = true;
+      let totalRecords = 0;
+      const totalStudents = this.data.length;
 
-      if (escudoDataUrl) {
-        doc.addImage(escudoDataUrl, 'PNG', 10, 3, 14, 18);
+      for (let s = 0; s < this.data.length; s++) {
+        const student = this.data[s];
+        const estudianteId = student.estudiante;
+        if (!estudianteId) continue;
+        ieLoaderShow(`Generando ${s + 1}/${totalStudents}...`);
+
+        let records = [];
+        try {
+          const res = await convivencia.getStudentDetail(estudianteId);
+          records = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+        } catch {
+          records = [];
+        }
+
+        for (const rec of records) {
+          if (!firstPage) doc.addPage();
+          firstPage = false;
+          this._drawRecordPage(doc, rec, escudoDataUrl);
+          totalRecords++;
+        }
       }
 
-      doc.setTextColor(30, 30, 30);
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Consolidado General de Convivencia', escudoDataUrl ? 30 : pageW / 2, 14, escudoDataUrl ? { align: 'left' } : { align: 'center' });
+      if (totalRecords === 0) {
+        showToast('No hay registros individuales para exportar', 'warning');
+        return;
+      }
 
       const year = $('convConsYear')?.value || 'Todos';
-      const sede = $('convConsSede')?.selectedOptions?.[0]?.text || 'Todas';
-      doc.setTextColor(80, 80, 80);
-      doc.setFontSize(9);
-      doc.text(`Año: ${year}  |  Sede: ${sede}  |  Total estudiantes: ${this.data.length}`, pageW / 2, 34, { align: 'center' });
-
-      const tableData = this.data.map((r, i) => {
-        const p = Number(r.positivo || r.POSITIVO || 0);
-        const t1 = Number(r.tipo1 || r.TIPO1 || r['TIPO I'] || 0);
-        const t2 = Number(r.tipo2 || r.TIPO2 || r['TIPO II'] || 0);
-        const t3 = Number(r.tipo3 || r.TIPO3 || r['TIPO III'] || 0);
-        return [
-          (i + 1).toString(),
-          r.nombres || '',
-          r.grupo || '',
-          r.sede || '',
-          p.toString(),
-          t1.toString(),
-          t2.toString(),
-          t3.toString(),
-          (p + t1 + t2 + t3).toString(),
-        ];
-      });
-
-      doc.autoTable({
-        startY: 40,
-        head: [['#', 'Estudiante', 'Grupo', 'Sede', 'Positivo', 'Tipo I', 'Tipo II', 'Tipo III', 'Total']],
-        body: tableData,
-        theme: 'striped',
-        headStyles: { fillColor: [84, 51, 145], fontSize: 8 },
-        bodyStyles: { fontSize: 7 },
-        columnStyles: {
-          0: { cellWidth: 8 },
-          1: { cellWidth: 50 },
-          2: { cellWidth: 15 },
-          3: { cellWidth: 30 },
-          4: { cellWidth: 15, halign: 'center' },
-          5: { cellWidth: 15, halign: 'center' },
-          6: { cellWidth: 15, halign: 'center' },
-          7: { cellWidth: 15, halign: 'center' },
-          8: { cellWidth: 15, halign: 'center' },
-        },
-        margin: { top: 40 },
-      });
-
-      doc.save(`Consolidado_Convivencia_${year}.pdf`);
-      showToast('PDF general generado exitosamente', 'success');
+      this._showPdfModal(doc, `Reporte_Convivencia_${year}.pdf`);
+      showToast(`PDF generado: ${totalRecords} reporte(s)`, 'success');
     } catch (error) {
       showToast('Error al generar PDF general', 'error');
+    } finally {
+      ieLoaderHide();
     }
   }
 }

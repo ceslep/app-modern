@@ -26,6 +26,7 @@ class InasistenciasModule {
     this.subjects = [];
     this.busy = false;
     this.sedeNombre = '';
+    this.stats = null;
 
     if (document.readyState !== 'loading') {
       this.setupListener();
@@ -305,6 +306,50 @@ class InasistenciasModule {
 
   // ── Render ───────────────────────────────────────────────────────
 
+  computeStatistics() {
+    const stats = {
+      totalInasistencias: 0,
+      totalEstudiantes: 0,
+      promedioPorEstudiante: 0,
+      materiaMax: { nombre: '', cantidad: 0 }
+    };
+
+    if (!this.attendanceData || this.attendanceData.length === 0) {
+      return stats;
+    }
+
+    let totalInasistencias = 0;
+    const estudiantesSet = new Set();
+    const materiasMap = new Map(); // materia -> total inasistencias
+
+    for (const record of this.attendanceData) {
+      const cantidad = parseInt(record.cantidadInasistencias) || 0;
+      totalInasistencias += cantidad;
+      estudiantesSet.add(record.estudiante);
+      const materia = record.asignat || record.materia || '';
+      const current = materiasMap.get(materia) || 0;
+      materiasMap.set(materia, current + cantidad);
+    }
+
+    stats.totalInasistencias = totalInasistencias;
+    stats.totalEstudiantes = estudiantesSet.size;
+
+    if (estudiantesSet.size > 0) {
+      stats.promedioPorEstudiante = (totalInasistencias / estudiantesSet.size).toFixed(2);
+    }
+
+    // Find materia with max inasistencias
+    let maxMateria = { nombre: '', cantidad: 0 };
+    for (const [materia, cantidad] of materiasMap.entries()) {
+      if (cantidad > maxMateria.cantidad) {
+        maxMateria = { nombre: materia, cantidad };
+      }
+    }
+    stats.materiaMax = maxMateria;
+
+    return stats;
+  }
+
   renderShell(container) {
     container.innerHTML = `
       <!-- Filter form -->
@@ -523,3 +568,4 @@ class InasistenciasModule {
 
 const inasistenciasModule = new InasistenciasModule();
 export default inasistenciasModule;
+

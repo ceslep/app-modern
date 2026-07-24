@@ -141,8 +141,22 @@ switch ($resource) {
         require_once __DIR__ . '/../controllers/AttendanceController.php';
         $controller = new AttendanceController();
         match ($method) {
-            'GET' => $controller->index(),
-            'POST' => $controller->create(),
+            'GET' => match ($id) {
+                'excuses' => (function () {
+                    require_once __DIR__ . '/../controllers/ExcuseController.php';
+                    (new ExcuseController())->index();
+                })(),
+                'batch' => $controller->batch(),
+                default => $controller->index(),
+            },
+            'POST' => match ($id) {
+                'excuses' => (function () {
+                    require_once __DIR__ . '/../controllers/ExcuseController.php';
+                    (new ExcuseController())->create();
+                })(),
+                'batch' => $controller->batch(),
+                default => $controller->create(),
+            },
             'DELETE' => $controller->delete($id ?? ''),
             default => error('Method not allowed', 405),
         };
@@ -159,7 +173,10 @@ switch ($resource) {
                 'consolidation' => $controller->consolidation(),
                 default => $controller->index(),
             },
-            'POST' => $controller->create(),
+            'POST' => match ($id) {
+                'student-detail' => $controller->studentDetail(),
+                default => $controller->create(),
+            },
             default => error('Method not allowed', 405),
         };
         break;

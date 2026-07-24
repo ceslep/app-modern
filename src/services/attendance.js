@@ -54,14 +54,14 @@ class AttendanceService {
    * Get excuses for a student
    */
   getExcuses(studentId) {
-    return api.get('attendance/excuses', { student: studentId });
+    return api.get('attendance/excuses', { student: studentId }, { modern: true });
   }
 
   /**
    * Create an excuse
    */
   createExcuse(data) {
-    return api.post('attendance/excuses', data);
+    return api.post('attendance/excuses', data, { modern: true });
   }
 
   /**

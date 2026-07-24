@@ -1,0 +1,599 @@
+=== Bachillerato (6-9) (plantillasXLSX/in2.xlsx) ===
+Title: Hoja1
+Sheet count: 1
+
+--- Named Ranges ---
+  director -> Hoja1!$K$86
+    [data example: JHON CESAR CASTAÑO RODRIGUEZ]
+  pgrupo -> Hoja1!$K$13
+    [data example: (none)]
+  pie -> Hoja1!$Z$13
+    [data example: (none)]
+  Print_Area -> Hoja1!$A$1:$BH$90
+Error: Cell coordinate string can not be a range of cells.
+
+=== Media (10-11) (plantillasXLSX/in2-media.xlsx) ===
+Title: Hoja1
+Sheet count: 1
+
+--- Named Ranges ---
+  director -> Hoja1!$K$86
+    [data example: JHON CESAR CASTAÑO RODRIGUEZ]
+  pgrupo -> Hoja1!$K$13
+    [data example: (none)]
+  pie -> Hoja1!$Z$13
+    [data example: (none)]
+  ppgrupo -> Hoja1!$AO$13
+    [data example: (none)]
+  Print_Area -> Hoja1!$A$1:$BH$87
+Error: Cell coordinate string can not be a range of cells.
+
+=== Primaria (1-5) (plantillasXLSX/in2-primaria.xlsx) ===
+Title: Hoja1
+Sheet count: 1
+
+--- Named Ranges ---
+  director -> Hoja1!$K$61
+    [data example: (none)]
+  pgrupo -> Hoja1!$K$13
+    [data example: (none)]
+  pie -> Hoja1!$Z$13
+    [data example: (none)]
+  promedio -> Hoja1!$AQ$13
+    [data example: (none)]
+  tdirector -> Hoja1!$B$61
+    [data example: Director(a) de Grupo]
+  YEAR -> Hoja1!$O$12
+    [data example: (none)]
+
+--- Merged Cells ---
+  M9:BA9
+  A24:G26
+  H24:J26
+  K24:AV26
+  AW24:BA26
+  BC24:BE26
+  BC15:BE17
+  H34:J35
+  K34:AV35
+  AW34:BA35
+  BC21:BE23
+  BB53:BB55
+  BB56:BB58
+  H6:AS7
+  AT6:BA7
+  A1:G7
+  BC4:BH5
+  BC6:BH7
+  H1:BA2
+  H3:BA4
+  H5:BA5
+  BC1:BH3
+  BC14:BE14
+  BF14:BH14
+  K14:AV14
+  BC8:BH13
+  AL11:BA11
+  A9:L9
+  AA11:AG11
+  A11:L11
+  M11:U11
+  A14:G14
+  H14:J14
+  AW14:BA14
+  A13:J13
+  K13:O13
+  P13:Y13
+  Z13:AG13
+  O12:R12
+  A15:G17
+  A21:G23
+  AW15:BA17
+  AW21:BA23
+  K15:AV17
+  K21:AV23
+  H15:J17
+  H21:J23
+  AH13:AP13
+  AQ13:BA13
+  A18:G20
+  H18:J20
+  K18:AV20
+  AW18:BA20
+  BF21:BH26
+  BB15:BB17
+  BB21:BB23
+  BB24:BB26
+  BB27:BB29
+  BB34:BB35
+  BB18:BB20
+  BC18:BE20
+  A30:G31
+  H30:J31
+  K30:AV31
+  BF15:BH20
+  BF27:BH33
+  A32:G33
+  H32:J33
+  K32:AV33
+  AW32:BA33
+  BB32:BB33
+  BC32:BE33
+  A34:G35
+  BC34:BE35
+  BF34:BH35
+  A27:G29
+  H27:J29
+  BF36:BH40
+  K50:AV52
+  AW50:BA52
+  BC50:BE52
+  A47:G49
+  H47:J49
+  K47:AV49
+  AW47:BA49
+  BC47:BE49
+  AW44:BA46
+  BB44:BB46
+  BC44:BE46
+  BC36:BE38
+  A39:G40
+  H39:J40
+  K39:AV40
+  AW39:BA40
+  BC39:BE40
+  H36:J38
+  K36:AV38
+  AW36:BA38
+  BB36:BB38
+  BB39:BB40
+  K27:AV29
+  AW27:BA29
+  BC27:BE29
+  A41:G43
+  A36:G38
+  BB41:BB43
+  BB47:BB49
+  BB50:BB52
+  AW30:BA31
+  BB30:BB31
+  BC30:BE31
+  A44:G46
+  H44:J46
+  K44:AV46
+  B63:BF65
+  B61:J61
+  BF50:BH52
+  H41:J43
+  K41:AV43
+  AW41:BA43
+  BC41:BE43
+  BF41:BH49
+  A59:BH59
+  K61:AK61
+  BF53:BH55
+  A56:G58
+  H56:J58
+  K56:AV58
+  AW56:BA58
+  BC56:BE58
+  BF56:BH58
+  A53:G55
+  H53:J55
+  K53:AV55
+  AW53:BA55
+  BC53:BE55
+  A50:G52
+  H50:J52
+
+--- Column Dimensions ---
+  A: w=1.6640625
+  B: w=2
+  C: w=1.6640625
+  D: w=1.6640625
+  E: w=1.6640625
+  F: w=1.6640625
+  G: w=0.6640625
+  H: w=1.6640625
+  I: w=1.6640625
+  J: w=0.6640625
+  K: w=1.6640625
+  L: w=1.6640625
+  M: w=1.6640625
+  N: w=1.6640625
+  O: w=1.6640625
+  P: w=1.6640625
+  Q: w=1.6640625
+  R: w=1.6640625
+  S: w=1.6640625
+  T: w=1.6640625
+  U: w=1.6640625
+  V: w=1.6640625
+  W: w=1.6640625
+  X: w=1.6640625
+  Y: w=1.6640625
+  Z: w=1.6640625
+  AA: w=1.6640625
+  AB: w=1.6640625
+  AC: w=1.6640625
+  AD: w=1.6640625
+  AE: w=1.6640625
+  AF: w=1.6640625
+  AG: w=1.6640625
+  AH: w=1.6640625
+  AI: w=1.6640625
+  AJ: w=1.6640625
+  AK: w=1.6640625
+  AL: w=1.6640625
+  AM: w=1.6640625
+  AN: w=1.6640625
+  AO: w=1.6640625
+  AP: w=1.6640625
+  AQ: w=1.6640625
+  AR: w=1.6640625
+  AS: w=1.6640625
+  AT: w=1.6640625
+  AU: w=1.6640625
+  AV: w=1.6640625
+  AW: w=1.5546875
+  AX: w=1.5546875
+  AY: w=1.5546875
+  AZ: w=1.5546875
+  BA: w=1.5546875
+  BB: w=3.6640625
+  BC: w=2
+  BD: w=2
+  BE: w=2
+  BF: w=2.109375
+  BG: w=2.109375
+  BH: w=2.109375
+  BI: w=1.6640625
+
+--- Row Heights ---
+  Row 1: h=11.25
+  Row 2: h=15
+  Row 3: h=15
+  Row 4: h=15
+  Row 6: h=12
+  Row 9: h=13.2
+  Row 11: h=13.2
+  Row 13: h=21
+  Row 15: h=15
+  Row 16: h=15
+  Row 17: h=15
+  Row 18: h=10.2
+  Row 19: h=10.2
+  Row 20: h=10.2
+  Row 41: h=12
+  Row 61: h=15
+
+--- Content Cells (non-empty) ---
+  A11: "INFORME" [B sz10 center/bottom]
+  A13: "Puesto Grupo" [B sz9 center/center]
+  A14: "AREAS" [B sz9 center/center]
+  A15: "CIENCIAS NATURALES Y EDUCACION AMBIENTAL" [B sz7 center/center]W
+  A18: "Taller Ambiental" [ sz7 center/center]W
+  A21: "CIENCIAS SOCIALES" [ sz8 center/center]W
+  A24: "Taller Ciudadano" [ sz8 center/center]W
+  A27: "EDUCACION ARTISTICA" [B sz7 center/center]W
+  A30: "Danzas" [ sz7 center/center]W
+  A32: "Teatro" [ sz7 center/center]W
+  A34: "ETICA-PV Y RELIGION" [ sz8 center/center]W
+  A36: "E. FISICA, RECREACION Y DEPORTES" [B sz7 center/center]W
+  A39: "Taller Deportivo" [ sz7 center/center]W
+  A41: "HUMANIDADES Lengua Castellana" [B sz7 center/center]W
+  A44: "Taller Literario" [ sz7 center/center]W
+  A47: "Inglés" [ sz7 center/center]W
+  A50: "MATEMÁTICAS" [B sz7 center/center]W
+  A53: "TECNOLOGÍA E INFORMATICA" [B sz7 center/center]W
+  A56: "Comportamiento Social" [B sz7 center/center]W
+  A59: "ABREVIATURAS: INAS: inasistencia – DESEMPEÑO: valoración - SUPERIOR: Des. Su" [ sz6 center/bottom]
+  A9: "Nombre del estudiante" [B sz8 center/bottom]
+  AA11: "5A" [ sz10 center/bottom]
+  AH13: "Promedio" [B sz9 center/center]
+  AI11: "SEDE" [B sz9 general/bottom]
+  AL11: "SUCRE" [ sz9 center/bottom]
+  AT6: "DEPENDENCIA" [ sz8 center/center]
+  AW14: "DESEMPEÑO" [B sz8 center/center]
+  B61: "Director(a) de Grupo" [ sz7 center/center]
+  BB13: "=IF(promedio>=4.5,"😍",IF(AND(promedio>=4,promedio<4.5),"😊",IF(AND(promedio" [B sz16 center/center]
+  BB14: "%" [B sz8 center/center]
+  BC1: "Página:1-1\nCódigo:\nGAFMR-40-05" [ sz7 center/center]W
+  BC14: "VALORAC." [B sz7 center/center]
+  BC4: "V.:02\n26/01/2012" [ sz8 center/bottom]W
+  BC6: "SECRETARIA" [ sz8 center/center]
+  BF14: "DEFINIT." [B sz9 center/center]
+  BF15: "=(BB15*BC15+BB18*BC18)/100" [ sz8 center/center]
+  BF21: "=(BC21*BB21+BC24*BB24)/100" [ sz8 center/center]
+  BF27: "=(BC27*BB27+BC30*BB30+BC32*BB32)/100" [ sz8 center/center]
+  BF34: "=BC34" [ sz8 center/center]
+  BF36: "=(BC36*BB36+BC39*BB39)/100" [ sz8 center/center]
+  BF41: "=(BB41*BC41+BB44*BC44+BB47*BC47)/100" [ sz8 center/center]
+  BF50: "=BC50" [ sz8 center/center]
+  BF53: "=BC53" [ sz8 center/center]
+  BF56: "=BC56" [ sz8 center/center]
+  H1: "SECRETARÍA DE EDUCACION DEPARTAMENTAL" [ sz14 center/center]
+  H14: "INAS" [B sz8 center/center]
+  H3: "INSTITUCIÓN EDUCATIVA DE OCCIDENTE" [ sz14 center/center]
+  H5: "NIT 890802641-2  DANE 117042000561" [B sz9 center/bottom]
+  H6: "INFORME DE DESEMPEÑOS ACADÉMICOS POR PERIODOS" [B sz9 center/center]W
+  K14: "INFORME DESCRIPTIVO" [B sz9 center/center]
+  M9: "KELLY YHOANA GIRALDO PINEDA" [ sz10 center/bottom]
+  P13: "Puesto I.E." [B sz9 center/center]
+  W11: "Grado" [B sz9 general/bottom]
+
+=== Primaria Sede 5 (plantillasXLSX/in2-primaria-5.xlsx) ===
+Title: Hoja1
+Sheet count: 1
+
+--- Named Ranges ---
+  director -> Hoja1!$K$51
+    [data example: (none)]
+  pgrupo -> Hoja1!$K$13
+    [data example: (none)]
+  pie -> Hoja1!$Z$13
+    [data example: (none)]
+  promedio -> Hoja1!$AQ$13
+    [data example: (none)]
+  tdirector -> Hoja1!$B$51
+    [data example: Director(a) de Grupo]
+  YEAR -> Hoja1!$O$12
+    [data example: (none)]
+
+--- Merged Cells ---
+  M9:BA9
+  B53:BF55
+  B51:J51
+  BF40:BH42
+  H34:J36
+  K34:AV36
+  AW34:BA36
+  BC34:BE36
+  BF34:BH39
+  A49:BH49
+  K51:AK51
+  BF43:BH45
+  A46:G48
+  H46:J48
+  K46:AV48
+  AW46:BA48
+  BC46:BE48
+  BF46:BH48
+  A43:G45
+  H43:J45
+  K43:AV45
+  AW43:BA45
+  BC43:BE45
+  A40:G42
+  H40:J42
+  K40:AV42
+  AW40:BA42
+  BC40:BE42
+  A37:G39
+  H37:J39
+  K37:AV39
+  AW37:BA39
+  BC37:BE39
+  A24:G26
+  H24:J26
+  K24:AV26
+  AW24:BA26
+  BC24:BE26
+  A34:G36
+  A29:G31
+  BB34:BB36
+  BB37:BB39
+  BB40:BB42
+  BF29:BH31
+  A27:G28
+  BC29:BE31
+  BF32:BH33
+  A32:G33
+  H32:J33
+  K32:AV33
+  AW32:BA33
+  BC32:BE33
+  BC27:BE28
+  BF27:BH28
+  H29:J31
+  K29:AV31
+  AW29:BA31
+  BB29:BB31
+  BB32:BB33
+  A21:G23
+  H21:J23
+  K21:AV23
+  AW21:BA23
+  BC21:BE23
+  BC15:BE17
+  BF24:BH26
+  H27:J28
+  K27:AV28
+  AW27:BA28
+  BC18:BE20
+  BF18:BH23
+  BF15:BH17
+  BB15:BB17
+  BB18:BB20
+  BB21:BB23
+  BB24:BB26
+  BB27:BB28
+  A13:J13
+  K13:O13
+  P13:Y13
+  Z13:AG13
+  O12:R12
+  A15:G17
+  A18:G20
+  AW15:BA17
+  AW18:BA20
+  K15:AV17
+  K18:AV20
+  H15:J17
+  H18:J20
+  AH13:AP13
+  AQ13:BA13
+  BB43:BB45
+  BB46:BB48
+  H6:AS7
+  AT6:BA7
+  A1:G7
+  BC4:BH5
+  BC6:BH7
+  H1:BA2
+  H3:BA4
+  H5:BA5
+  BC1:BH3
+  BC14:BE14
+  BF14:BH14
+  K14:AV14
+  BC8:BH13
+  AL11:BA11
+  A9:L9
+  AA11:AG11
+  A11:L11
+  M11:U11
+  A14:G14
+  H14:J14
+  AW14:BA14
+
+--- Column Dimensions ---
+  A: w=1.6640625
+  B: w=2
+  C: w=1.6640625
+  D: w=1.6640625
+  E: w=1.6640625
+  F: w=1.6640625
+  G: w=0.6640625
+  H: w=1.6640625
+  I: w=1.6640625
+  J: w=0.6640625
+  K: w=1.6640625
+  L: w=1.6640625
+  M: w=1.6640625
+  N: w=1.6640625
+  O: w=1.6640625
+  P: w=1.6640625
+  Q: w=1.6640625
+  R: w=1.6640625
+  S: w=1.6640625
+  T: w=1.6640625
+  U: w=1.6640625
+  V: w=1.6640625
+  W: w=1.6640625
+  X: w=1.6640625
+  Y: w=1.6640625
+  Z: w=1.6640625
+  AA: w=1.6640625
+  AB: w=1.6640625
+  AC: w=1.6640625
+  AD: w=1.6640625
+  AE: w=1.6640625
+  AF: w=1.6640625
+  AG: w=1.6640625
+  AH: w=1.6640625
+  AI: w=1.6640625
+  AJ: w=1.6640625
+  AK: w=1.6640625
+  AL: w=1.6640625
+  AM: w=1.6640625
+  AN: w=1.6640625
+  AO: w=1.6640625
+  AP: w=1.6640625
+  AQ: w=1.6640625
+  AR: w=1.6640625
+  AS: w=1.6640625
+  AT: w=1.6640625
+  AU: w=1.6640625
+  AV: w=1.6640625
+  AW: w=1.6640625
+  AX: w=1.6640625
+  AY: w=1.6640625
+  AZ: w=1.6640625
+  BA: w=1.44140625
+  BB: w=3.6640625
+  BC: w=1.6640625
+
+--- Row Heights ---
+  Row 1: h=11.25
+  Row 2: h=15
+  Row 3: h=15
+  Row 4: h=15
+  Row 6: h=12
+  Row 9: h=13.2
+  Row 11: h=13.2
+  Row 13: h=21
+  Row 15: h=15
+  Row 16: h=15
+  Row 17: h=15
+  Row 18: h=12
+  Row 34: h=12
+  Row 51: h=15
+
+--- Content Cells (non-empty) ---
+  A11: "INFORME" [B sz10 center/bottom]
+  A13: "Puesto Grupo" [B sz9 center/center]
+  A14: "AREAS" [B sz9 center/center]
+  A15: "CIENCIAS NATURALES " [ sz7 center/center]W
+  A18: "CIENCIAS SOCIALES " [ sz7 center/center]W
+  A21: "Civica" [ sz8 center/center]
+  A24: "EDUCACION ARTISTICA" [ sz7 center/center]W
+  A27: "E. ETICA Y EN VALORES HUMANOS" [ sz6 center/center]W
+  A29: "E. FISICA, RECREACION Y DEPORTES" [ sz7 center/center]W
+  A32: "RELIGION" [ sz7 center/center]W
+  A34: "HUMANIDADES Lengua Castellana" [ sz7 center/center]W
+  A37: "Inglés" [ sz7 center/center]W
+  A40: "MATEMÁTICAS" [ sz7 center/center]W
+  A43: "TECNOLOGÍA E INFORMATICA" [ sz7 center/center]W
+  A46: "Comportamiento" [ sz7 center/center]W
+  A49: "ABREVIATURAS: INAS: inasistencia – DESEMPEÑO: valoración - SUPERIOR: Des. Su" [ sz6 center/bottom]
+  A9: "Nombre del estudiante" [B sz8 center/bottom]
+  AA11: "5A" [ sz10 center/bottom]
+  AH13: "Promedio" [B sz9 center/center]
+  AI11: "SEDE" [B sz9 general/bottom]
+  AL11: "SUCRE" [ sz9 center/bottom]
+  AT6: "DEPENDENCIA" [ sz8 center/center]
+  AW14: "DESEMPEÑO" [B sz8 center/center]
+  B51: "Director(a) de Grupo" [ sz7 center/center]
+  BB13: "=IF(promedio>=4.5,"😍",IF(AND(promedio>=4,promedio<4.5),"😊",IF(AND(promedio" [B sz16 center/center]
+  BB14: "%" [B sz8 center/center]
+  BC1: "Página:1-1\nCódigo:\nGAFMR-40-05" [ sz7 center/center]W
+  BC14: "VALOR" [B sz8 center/center]
+  BC4: "V.:02\n26/01/2012" [ sz8 center/bottom]W
+  BC6: "SECRETARIA" [ sz8 center/center]
+  BF14: "DEF" [B sz9 center/center]
+  BF15: "=BC15*BB15/100" [ sz8 center/center]
+  BF18: "=(BC18*BB18+BC21*BB21)/100" [ sz8 center/center]
+  BF24: "=BC24*BB24/100" [ sz8 center/center]
+  BF27: "=BC27" [ sz8 center/center]
+  BF29: "=BC29" [ sz8 center/center]
+  BF32: "=BC32" [ sz8 center/center]
+  BF34: "=(BB34*BC34+BB37*BC37)/100" [ sz8 center/center]
+  BF40: "=BC40" [ sz8 center/center]
+  BF43: "=BC43" [ sz8 center/center]
+  BF46: "=BC46" [ sz8 center/center]
+  H1: "SECRETARÍA DE EDUCACION DEPARTAMENTAL" [ sz14 center/center]
+  H14: "INAS" [B sz8 center/center]
+  H15: "0" [ sz9 center/center]
+  H18: "0" [ sz9 center/center]
+  H21: "0" [ sz9 center/center]
+  H24: "0" [ sz9 center/center]
+  H27: "0" [ sz9 center/center]
+  H29: "0" [ sz9 center/center]
+  H3: "INSTITUCIÓN EDUCATIVA DE OCCIDENTE" [ sz14 center/center]
+  H32: "0" [ sz9 center/center]
+  H34: "0" [ sz9 center/center]
+  H37: "0" [ sz9 center/center]
+  H40: "0" [ sz9 center/center]
+  H43: "0" [ sz9 center/center]
+  H46: "0" [ sz9 center/center]
+  H5: "NIT 890802641-2  DANE 117042000561" [B sz9 center/bottom]
+  H6: "INFORME DE DESEMPEÑOS ACADÉMICOS POR PERIODOS" [B sz9 center/center]W
+  K14: "INFORME DESCRIPTIVO" [B sz9 center/center]
+  M9: "KELLY YHOANA GIRALDO PINEDA" [ sz10 center/bottom]
+  P13: "Puesto I.E." [B sz9 center/center]
+  W11: "Grado" [B sz9 general/bottom]
+
+=== Preescolar (plantillasXLSX/informe-preescolar.xlsx) ===
+FILE NOT FOUND
+
