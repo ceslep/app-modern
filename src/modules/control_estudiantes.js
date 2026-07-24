@@ -17,6 +17,8 @@ import { escapeHtml, $, delegate } from '@utils/dom.js';
 import { alertSuccess, alertWarning, alertInfo, alertError, alertConfirm, showLoading, closeLoading } from '@utils/alert.js';
 import { showModal, hideModal } from '@utils/modal.js';
 import { changeGroupModal } from '@components/ChangeGroupModal.js';
+import { candidates } from '@services/candidates.js';
+import { codes } from '@services/codes.js';
 
 /**
  * Parsea el campo legacy `institucion_externa` que almacena un historial
@@ -329,6 +331,8 @@ class ControlEstudiantesModule {
     container.insertAdjacentHTML('beforeend', this._editModalHTML());
     container.insertAdjacentHTML('beforeend', this._historyModalHTML());
     container.insertAdjacentHTML('beforeend', this._printCodesModalHTML());
+    container.insertAdjacentHTML('beforeend', this._codesModalHTML());
+    container.insertAdjacentHTML('beforeend', this._candidatesModalHTML());
   }
 
   _editModalHTML() {
@@ -789,6 +793,508 @@ class ControlEstudiantesModule {
     </div>
   </div>
 </div>`;
+  }
+
+  _codesModalHTML() {
+    return `
+<div id="modalCodigos" class="estu-modal modal fixed inset-0 z-[1056] flex items-center justify-center hidden p-3 sm:p-6">
+  <div class="estu-card relative z-[1060] w-full max-w-5xl bg-white rounded-3xl overflow-hidden flex flex-col max-h-[94vh]">
+    <div class="estu-header relative px-6 sm:px-8 py-5 sm:py-6" style="background:linear-gradient(120deg,#374151 0%,#4b5563 45%,#6b7280 100%)">
+      <div class="estu-header-glow" style="background:radial-gradient(120% 140% at 88% -20%, rgba(255,255,255,.28), transparent 55%), radial-gradient(90% 120% at 8% 120%, rgba(16,185,129,.35), transparent 60%)"></div>
+      <div class="relative flex items-center justify-between gap-4">
+        <div class="flex items-center gap-4 min-w-0">
+          <div class="estu-avatar shrink-0" style="width:52px;height:52px;border-radius:16px;background:linear-gradient(140deg, rgba(255,255,255,.28), rgba(255,255,255,.08))">
+            <i class="bi bi-qr-code text-xl text-white"></i>
+          </div>
+          <div class="min-w-0">
+            <h5 class="text-lg sm:text-xl font-semibold text-white leading-tight truncate">Códigos</h5>
+            <p class="text-xs text-white/70 mt-1">Asignación de códigos a estudiantes</p>
+          </div>
+        </div>
+        <button type="button" class="estu-close shrink-0" data-modal-dismiss="modalCodigos" aria-label="Cerrar">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+    </div>
+    <div class="estu-body relative flex-1 overflow-y-auto p-4 sm:p-6" id="tablacodigos">
+      <div class="flex justify-center items-center py-12 text-center">
+        <span data-orb="working" data-orb-size="44" class="inline-block mx-auto" style="width:44px;height:44px"></span>
+      </div>
+    </div>
+    <div class="estu-footer flex items-center justify-end gap-3 px-6 sm:px-8 py-4" style="background:linear-gradient(180deg,#faf9fe,#f3f0fb);border-top:1px solid #e6e2f2;">
+      <button type="button" data-modal-dismiss="modalCodigos"
+              class="px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>`;
+  }
+
+  async _onOpenCodes() {
+    const tablacodigos = $('tablacodigos');
+    if (tablacodigos) {
+      tablacodigos.style.overflow = 'hidden';
+      tablacodigos.innerHTML = `<ie-occidente-loader contained logo-src="./escudohd.png" text="Generando..."></ie-occidente-loader>`;
+    }
+
+    showModal('modalCodigos');
+
+    if (tablacodigos) {
+      await new Promise(r => setTimeout(r, 50));
+      tablacodigos.querySelector('ie-occidente-loader')?.show();
+    }
+
+    try {
+      const data = await codes.getAll();
+      const list = Array.isArray(data) ? data : (data?.data || []);
+
+      if (tablacodigos) {
+        tablacodigos.style.overflow = '';
+      }
+      if (list.length === 0) {
+        if (tablacodigos) {
+          tablacodigos.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-gray-400">
+            <i class="bi bi-inbox text-4xl block mb-2"></i>
+            <p class="text-sm">No hay códigos registrados</p>
+          </div>`;
+        }
+        return;
+      }
+
+      let html = `
+        <div class="overflow-x-auto">
+        <table class="w-full text-sm" id="tableCodigos">
+          <thead>
+            <tr class="border-b-2 border-gray-200" style="background:linear-gradient(180deg,#f8f9fe,#f3f0fb)">
+              <th class="text-center px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">#</th>
+              <th class="text-center px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Código</th>
+              <th class="text-center px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Estudiante</th>
+              <th class="text-center px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Nombres</th>
+              <th class="text-center px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">📇</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      list.forEach((dato, index) => {
+        const { codigo, estudiante, nombres } = dato;
+        const hasCode = codigo && codigo !== '0' && codigo !== 0;
+
+        html += `
+          <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+            <td class="text-center px-3 py-3 text-gray-500 text-xs font-medium">${index + 1}</td>
+            <td class="text-center px-3 py-3">
+              <span class="font-mono text-xs px-2 py-1 rounded-md ${hasCode ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}">${escapeHtml(String(codigo ?? ''))}</span>
+            </td>
+            <td class="text-center px-3 py-3 font-medium text-[#543391]">${escapeHtml(estudiante || '')}</td>
+            <td class="px-3 py-3 text-gray-700">${escapeHtml(nombres || '')}</td>
+            <td class="text-center px-3 py-3">
+              <button class="assignCodigo w-8 h-8 rounded-lg ${hasCode ? 'bg-red-500/10 hover:bg-red-500 text-red-700 hover:text-white' : 'bg-emerald-500/10 hover:bg-emerald-500 text-emerald-700 hover:text-white'} flex items-center justify-center transition-all mx-auto"
+                      data-estudiante="${escapeHtml(estudiante || '')}" data-codigo="${escapeHtml(String(codigo ?? ''))}" title="${hasCode ? 'Reasignar código' : 'Asignar código'}">
+                <i class="bi ${hasCode ? 'bi-plug' : 'bi-plus-circle'} text-sm"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += '</tbody></table></div>';
+
+      if (tablacodigos) {
+        tablacodigos.innerHTML = html;
+        tablacodigos.scrollTop = 0;
+      }
+      this._bindCodeEvents();
+
+    } catch (error) {
+      if (tablacodigos) {
+        tablacodigos.style.overflow = '';
+        tablacodigos.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-red-500">
+          <i class="bi bi-exclamation-triangle text-4xl block mb-2"></i>
+          <p class="text-sm">Error al cargar códigos: ${escapeHtml(error.message)}</p>
+        </div>`;
+      }
+    }
+  }
+
+  _bindCodeEvents() {
+    const tablacodigos = $('tablacodigos');
+    if (!tablacodigos || tablacodigos._eventsBound) return;
+    tablacodigos._eventsBound = true;
+
+    tablacodigos.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.assignCodigo');
+      if (!btn) return;
+
+      const estudiante = btn.dataset.estudiante;
+      const currentCodigo = btn.dataset.codigo;
+
+      if (currentCodigo && currentCodigo !== '0') {
+        alertError('Error', 'El código debe ser cero o estar vacío para asignar uno nuevo');
+        return;
+      }
+
+      try {
+        const res = await codes.getNextCode();
+        const nextCodigo = res?.codigo ?? 1;
+
+        const confirmResult = await alertConfirm(
+          'Código',
+          `El código asignado a ${estudiante} será ${nextCodigo}`
+        );
+
+        if (!confirmResult.isConfirmed) return;
+
+        showLoading('Asignando código...');
+        await codes.assign(estudiante, nextCodigo);
+        closeLoading();
+
+        await alertSuccess('Código asignado con éxito');
+        hideModal('modalCodigos');
+      } catch (err) {
+        closeLoading();
+        alertError('Error', err.message);
+      }
+    });
+  }
+
+  _candidatesModalHTML() {
+    return `
+<div id="modalCandidatos" class="estu-modal modal fixed inset-0 z-[1056] flex items-center justify-center hidden p-3 sm:p-6">
+  <div class="estu-card relative z-[1060] w-full max-w-6xl bg-white rounded-3xl overflow-hidden flex flex-col max-h-[94vh]">
+    <div class="estu-header relative px-6 sm:px-8 py-5 sm:py-6" style="background:linear-gradient(120deg,#0369a1 0%,#0284c7 45%,#38bdf8 100%)">
+      <div class="estu-header-glow" style="background:radial-gradient(120% 140% at 88% -20%, rgba(255,255,255,.28), transparent 55%), radial-gradient(90% 120% at 8% 120%, rgba(5,150,105,.35), transparent 60%)"></div>
+      <div class="relative flex items-center justify-between gap-4">
+        <div class="flex items-center gap-4 min-w-0">
+          <div class="estu-avatar shrink-0" style="width:52px;height:52px;border-radius:16px;background:linear-gradient(140deg, rgba(255,255,255,.28), rgba(255,255,255,.08))">
+            <i class="bi bi-download text-xl text-white"></i>
+          </div>
+          <div class="min-w-0">
+            <h5 class="text-lg sm:text-xl font-semibold text-white leading-tight truncate">A Matricular</h5>
+            <p class="text-xs text-white/70 mt-1">Candidatos pendientes de matrícula</p>
+          </div>
+        </div>
+        <button type="button" class="estu-close shrink-0" data-modal-dismiss="modalCandidatos" aria-label="Cerrar">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+    </div>
+    <div class="estu-body flex-1 overflow-y-auto p-4 sm:p-6" id="tcandidatos">
+      <div class="d-flex justify-content-center align-items-center py-12 text-center">
+        <span data-orb="working" data-orb-size="44" class="inline-block mx-auto" style="width:44px;height:44px"></span>
+      </div>
+    </div>
+    <div class="estu-footer flex items-center justify-between gap-3 px-6 sm:px-8 py-4" style="background:linear-gradient(180deg,#faf9fe,#f3f0fb);border-top:1px solid #e6e2f2;">
+      <button type="button" class="matselecc px-5 py-2.5 text-sm font-semibold text-white rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md">
+        <i class="bi bi-check2-all mr-1"></i> Matricular Seleccionados
+      </button>
+      <button type="button" data-modal-dismiss="modalCandidatos"
+              class="px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>`;
+  }
+
+  async _onOpenCandidates() {
+    this._injectCandidatesModal();
+
+    const tcandidatos = $('tcandidatos');
+    if (tcandidatos) {
+      tcandidatos.innerHTML = `<div class="flex justify-center items-center py-12 text-center">
+        <span data-orb="working" data-orb-size="44" class="inline-block mx-auto" style="width:44px;height:44px"></span>
+      </div>`;
+    }
+
+    showModal('modalCandidatos');
+
+    try {
+      const data = await candidates.getAll();
+      const list = Array.isArray(data) ? data : (data?.data || []);
+
+      if (list.length === 0) {
+        if (tcandidatos) {
+          tcandidatos.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-gray-400">
+            <i class="bi bi-inbox text-4xl block mb-2"></i>
+            <p class="text-sm">No hay candidatos pendientes de matrícula</p>
+          </div>`;
+        }
+        return;
+      }
+
+      let html = `
+        <div class="overflow-x-auto">
+        <table class="w-full text-sm" id="tableCandidatos">
+          <thead>
+            <tr class="border-b-2 border-gray-200" style="background:linear-gradient(180deg,#f8f9fe,#f3f0fb)">
+              <th class="text-center px-3 py-3 w-10">
+                <input class="form-check-input selectAllCandidato w-4 h-4 rounded border-gray-300" type="checkbox">
+              </th>
+              <th class="text-center px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">#</th>
+              <th class="text-center px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Código</th>
+              <th class="text-center px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Estudiante</th>
+              <th class="text-center px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Nombres</th>
+              <th class="text-center px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Asignación</th>
+              <th class="text-center px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Grado</th>
+              <th class="text-center px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Año</th>
+              <th class="text-center px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">🪟</th>
+              <th class="text-center px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">🚨</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      list.forEach((dato, index) => {
+        const { codigo, estudiante, nombres, year, nivel, numero, asignacion } = dato;
+        const grado = `${asignacion ?? 'N'}-${nivel}-${numero}`;
+        const hasAsignacion = !!asignacion;
+        const dataStr = escapeHtml(JSON.stringify(dato));
+
+        html += `
+          <tr class="border-b border-gray-100 hover:bg-sky-50/50 transition-colors">
+            <td class="text-center px-3 py-3">
+              <input class="form-check-input chkcc w-4 h-4 rounded border-gray-300" type="checkbox" data-ind="${dato.ind}">
+            </td>
+            <td class="text-center px-3 py-3 text-gray-500 text-xs font-medium">${index + 1}</td>
+            <td class="text-center px-3 py-3">
+              <span class="font-mono text-xs bg-gray-100 px-2 py-1 rounded-md text-gray-600">${escapeHtml(codigo || '')}</span>
+            </td>
+            <td class="text-center px-3 py-3 font-medium text-[#543391]">${escapeHtml(estudiante || '')}</td>
+            <td class="text-center px-3 py-3">
+              <a href="#!" class="regCandidato text-emerald-600 hover:text-emerald-800 hover:underline font-medium text-decoration-none" data-candidato='${dataStr}'>
+                ${escapeHtml(nombres || '')}
+              </a>
+            </td>
+            <td class="text-center px-3 py-3 ${!hasAsignacion ? 'text-red-500 font-bold' : 'text-gray-700'}">
+              ${hasAsignacion ? escapeHtml(String(asignacion)) : 'No Asignado'}
+            </td>
+            <td class="text-center px-3 py-3 text-gray-600">${escapeHtml(grado)}</td>
+            <td class="text-center px-3 py-3 text-gray-500 text-xs">${escapeHtml(String(year || ''))}</td>
+            <td class="text-center px-3 py-3">
+              <button class="viewCandidato w-8 h-8 rounded-lg bg-amber-500/10 hover:bg-amber-500 text-amber-700 hover:text-white flex items-center justify-center transition-all mx-auto" data-candidato='${dataStr}'>
+                <i class="bi bi-eye text-sm"></i>
+              </button>
+            </td>
+            <td class="text-center px-3 py-3">
+              <button class="delCandidato w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-700 hover:text-white flex items-center justify-center transition-all mx-auto" data-candidato='${dataStr}'>
+                <i class="bi bi-scissors text-sm"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += '</tbody></table></div>';
+
+      if (tcandidatos) tcandidatos.innerHTML = html;
+      this._bindCandidateEvents();
+
+    } catch (error) {
+      if (tcandidatos) {
+        tcandidatos.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-red-500">
+          <i class="bi bi-exclamation-triangle text-4xl block mb-2"></i>
+          <p class="text-sm">Error al cargar candidatos: ${escapeHtml(error.message)}</p>
+        </div>`;
+      }
+    }
+  }
+
+  _bindCandidateEvents() {
+    const tcandidatos = $('tcandidatos');
+    if (!tcandidatos || tcandidatos._eventsBound) return;
+    tcandidatos._eventsBound = true;
+
+    tcandidatos.addEventListener('click', async (e) => {
+      const el = e.target;
+
+      // ── View candidate → open edit modal readonly ──
+      if (el.closest('.viewCandidato')) {
+        const btn = el.closest('.viewCandidato');
+        let data;
+        try { data = JSON.parse(btn.dataset.candidato); } catch { return; }
+
+        if (!data.asignacion) {
+          alertError('Error', 'El candidato no tiene asignación');
+          return;
+        }
+
+        showLoading('Cargando...');
+        try {
+          const est = await candidates.getById(data.ind);
+          closeLoading();
+          if (!est) return;
+
+          this._openCandidateAsReadonly(est);
+        } catch (err) {
+          closeLoading();
+          alertError('Error', err.message);
+        }
+        return;
+      }
+
+      // ── Register candidate (enroll) ──
+      if (el.closest('.regCandidato')) {
+        const link = el.closest('.regCandidato');
+        let data;
+        try { data = JSON.parse(link.dataset.candidato); } catch { return; }
+
+        const { estudiante, year } = data;
+
+        showLoading('Verificando...');
+        try {
+          const checkRes = await candidates.checkEnrolled(estudiante, year);
+          closeLoading();
+
+          if (checkRes?.exists) {
+            alertError('Error', 'Ya existe un estudiante para el año seleccionado');
+            return;
+          }
+
+          const confirmResult = await alertConfirm(
+            `Matricular estudiante`,
+            `Se matriculará el estudiante para el año ${year}`
+          );
+
+          if (!confirmResult.isConfirmed) return;
+
+          showLoading('Matriculando...');
+          await candidates.enroll(data.ind);
+          closeLoading();
+
+          await alertSuccess('Estudiante matriculado con éxito');
+          hideModal('modalCandidatos');
+          this.loadStudents(this.currentYear);
+        } catch (err) {
+          closeLoading();
+          alertError('Error', err.message);
+        }
+        return;
+      }
+
+      // ── Delete candidate ──
+      if (el.closest('.delCandidato')) {
+        const btn = el.closest('.delCandidato');
+        let data;
+        try { data = JSON.parse(btn.dataset.candidato); } catch { return; }
+
+        const confirmResult = await alertConfirm(
+          '¿Estás seguro de eliminar el estudiante?',
+          'Esta acción no se puede deshacer'
+        );
+
+        if (!confirmResult.isConfirmed) return;
+
+        try {
+          await candidates.delete(data.ind);
+          await alertSuccess('Registro eliminado');
+          hideModal('modalCandidatos');
+          this.loadStudents(this.currentYear);
+        } catch (err) {
+          alertError('Error', err.message);
+        }
+        return;
+      }
+
+      // ── Select all ──
+      if (el.classList.contains('selectAllCandidato')) {
+        const chks = tcandidatos.querySelectorAll('.chkcc');
+        const matBtn = tcandidatos.querySelector('.matselecc');
+        chks.forEach(chk => { chk.checked = el.checked; });
+        if (matBtn) {
+          matBtn.disabled = !el.checked;
+        }
+        return;
+      }
+
+      // ── Individual checkbox ──
+      if (el.classList.contains('chkcc')) {
+        const matBtn = tcandidatos.querySelector('.matselecc');
+        const anyChecked = tcandidatos.querySelector('.chkcc:checked');
+        if (matBtn) {
+          matBtn.disabled = !anyChecked;
+        }
+        return;
+      }
+    });
+
+    // ── Bulk enroll button ──
+    const matBtn = tcandidatos.querySelector('.matselecc');
+    if (matBtn) {
+      matBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const indices = [];
+        tcandidatos.querySelectorAll('.chkcc:checked').forEach(chk => {
+          indices.push({ ind: parseInt(chk.dataset.ind) });
+        });
+
+        if (!indices.length) {
+          alertError('Error', 'No se seleccionó ningún estudiante');
+          matBtn.disabled = true;
+          return;
+        }
+
+        showLoading('Matriculando...');
+        try {
+          await candidates.enrollBulk(indices);
+          closeLoading();
+          await alertSuccess('Candidatos matriculados con éxito');
+          hideModal('modalCandidatos');
+          this.loadStudents(this.currentYear);
+        } catch (err) {
+          closeLoading();
+          alertError('Error', err.message);
+        }
+      });
+    }
+  }
+
+  /** Opens the existing edit modal with candidate data in readonly mode. */
+  _openCandidateAsReadonly(data) {
+    const form = $('frmEstugrupos');
+    if (form) form.reset();
+
+    form?.querySelectorAll('input[readonly], input.bg-gray-100').forEach(el => {
+      el.setAttribute('readonly', 'readonly');
+    });
+
+    Object.keys(data).forEach(key => {
+      const field = document.getElementById(`e${key}`);
+      if (field) field.value = data[key] ?? '';
+    });
+
+    const nm = (data.nombres || '').trim();
+    const avatar = $('estuAvatarInitial');
+    if (avatar) avatar.textContent = (nm.charAt(0) || 'E').toUpperCase();
+    const nameEl = $('estuModalName');
+    if (nameEl) nameEl.textContent = nm || 'Información del Candidato';
+    const idEl = $('estuModalId');
+    if (idEl) idEl.innerHTML = `<i class="bi bi-hash"></i><span>${escapeHtml(String(data.estudiante || data.codigo || '—'))}</span>`;
+    const gradoEl = $('estuModalGrado');
+    if (gradoEl) gradoEl.innerHTML = `<i class="bi bi-mortarboard-fill"></i><span>${escapeHtml(`${data.nivel ?? ''}-${data.numero ?? ''}`)} · ${escapeHtml(String(data.sede || data.asignacion || ''))}</span>`;
+
+    this._switchTab('datose');
+    const content = document.querySelector('#modalEstugrupos .estu-content');
+    if (content) content.scrollTop = 0;
+
+    showModal('modalEstugrupos');
+
+    $('btnSaveEstudiante')?.classList.add('d-none');
+    const observer = new MutationObserver(() => {
+      if (!$('btnSaveEstudiante')?.classList.contains('d-none')) {
+        $('btnSaveEstudiante')?.classList.add('d-none');
+      }
+    });
+    const saveBtn = $('btnSaveEstudiante');
+    if (saveBtn) observer.observe(saveBtn, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  _injectCandidatesModal() {
+    const container = $('modal-container') || document.getElementById('modal-container');
+    if (!container) return;
+    if (document.getElementById('modalCandidatos')) return;
+    container.insertAdjacentHTML('beforeend', this._candidatesModalHTML());
   }
 
   /* ──────────────────────────────────────────────────────────────── */
@@ -1623,8 +2129,14 @@ class ControlEstudiantesModule {
       this._onNewStudent();
     });
 
-    delegate(section, 'click', '#btnCodesEstu', () => {
-      alertWarning('Códigos', 'Funcionalidad de códigos en desarrollo.');
+    delegate(section, 'click', '#btnListEstu', (e) => {
+      e.preventDefault();
+      this._onOpenCandidates();
+    });
+
+    delegate(section, 'click', '#btnCodesEstu', (e) => {
+      e.preventDefault();
+      this._onOpenCodes();
     });
 
     delegate(section, 'click', '#btnPrintCodes', () => {

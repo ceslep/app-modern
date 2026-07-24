@@ -1,34 +1,20 @@
 <?php
-
-
-
 require_once("headers.php");
 require_once("datos_conexion.php");
 
 $mysqli = new mysqli($host, $user, $pass, $database);
-
 $mysqli->query("SET NAMES utf8");
 $mysqli->set_charset('utf8');
 
-
 $sql = "
-Select distinct codigos.codigo,codigos.estudiante,nombres from  codigos
-inner join estugrupos on codigos.estudiante=estugrupos.estudiante
-order by codigos.codigo
+    SELECT DISTINCT c.codigo, c.estudiante, e.nombres
+    FROM codigos c
+    INNER JOIN estugrupos e ON c.estudiante = e.estudiante
+    ORDER BY c.codigo
 ";
 $result = $mysqli->query($sql);
-$datos = [];
-while ($dato = $result->fetch_assoc()) {
-    $ind = $dato['ind'];
-    $sql = "
-        select distinct nivel,numero from estugrupos
-        where asignacion='$ind' and year=year(curdate())
-        order by nivel,numero;
-        ";
-    $grados = ($mysqli->query($sql))->fetch_all(MYSQLI_ASSOC);
-    $dato['grados'] = $grados;
-    $datos[] = $dato;
-}
+$datos = $result->fetch_all(MYSQLI_ASSOC);
+
 echo json_encode($datos);
 $result->free();
 $mysqli->close();

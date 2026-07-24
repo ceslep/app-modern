@@ -80,6 +80,13 @@ $routeMap = [
   'candidates/codes'        => 'getCodigos.php',
   'candidates/next-code'    => 'getUltimoCodigo.php',
   'candidates/check'        => 'detectarCandidato.php',
+  'candidates/enroll'       => 'matricularCandidato.php',
+  'candidates/enroll-bulk'  => 'matricularCandidatos.php',
+
+  // Codes
+  'codes'                   => 'getCodigos.php',
+  'codes/next'              => 'getUltimoCodigo.php',
+  'codes/assign'            => 'asignarCodigo.php',
 
   // Notifications
   'notifications'           => 'getNotificaciones.php',

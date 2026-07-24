@@ -1,74 +1,28 @@
 import { api } from './api.js';
 
 class CandidatesService {
-  /**
-   * Get all pending candidates
-   */
   getAll() {
     return api.get('candidates');
   }
 
-  /**
-   * Get candidate by ID
-   */
   getById(id) {
-    return api.get(`candidates/${id}`);
+    return api.get('candidates', { ind: id });
   }
 
-  /**
-   * Create a new candidate (pre-enrollment)
-   */
-  create(data) {
-    return api.post('candidates', data);
+  checkEnrolled(estudiante, year) {
+    return api.post('candidates/check', { estudiante, year });
   }
 
-  /**
-   * Enroll a single candidate
-   */
-  enroll(id) {
-    return api.post(`candidates/${id}/enroll`);
+  enroll(ind) {
+    return api.post('candidates/enroll', { ind });
   }
 
-  /**
-   * Enroll multiple candidates
-   */
-  enrollBulk(ids) {
-    return api.post('candidates/enroll-bulk', { ids });
+  enrollBulk(indices) {
+    return api.post('candidates/enroll-bulk', { indices });
   }
 
-  /**
-   * Delete a candidate
-   */
-  delete(id) {
-    return api.delete(`candidates/${id}`);
-  }
-
-  /**
-   * Check if student is already enrolled for a year
-   */
-  checkEnrolled(studentId, year) {
-    return api.get('candidates/check', { student: studentId, year });
-  }
-
-  /**
-   * Assign enrollment code
-   */
-  assignCode(studentId, code) {
-    return api.post('candidates/assign-code', { student: studentId, code });
-  }
-
-  /**
-   * Get available codes
-   */
-  getCodes() {
-    return api.get('candidates/codes');
-  }
-
-  /**
-   * Get next available code
-   */
-  getNextCode() {
-    return api.get('candidates/next-code');
+  delete(ind) {
+    return api.delete(`candidates/${ind}`);
   }
 }
 

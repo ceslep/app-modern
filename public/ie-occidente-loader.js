@@ -23,7 +23,7 @@
  */
 class IeOccidenteLoader extends HTMLElement {
   static get observedAttributes() {
-    return ['logo-src', 'text', 'duration'];
+    return ['logo-src', 'text', 'duration', 'contained'];
   }
 
   constructor() {
@@ -46,6 +46,9 @@ class IeOccidenteLoader extends HTMLElement {
         break;
       case 'text':
         this._updateText();
+        break;
+      case 'contained':
+        this._updateContainment();
         break;
     }
   }
@@ -84,12 +87,25 @@ class IeOccidenteLoader extends HTMLElement {
     if (p) p.textContent = this.text;
   }
 
+  _updateContainment() {
+    const overlay = this.shadowRoot.querySelector('.loader-overlay');
+    if (!overlay) return;
+    if (this.hasAttribute('contained')) {
+      overlay.classList.add('contained');
+    } else {
+      overlay.classList.remove('contained');
+    }
+  }
+
   _render() {
     this.shadowRoot.innerHTML = `
       <style>
         :host {
           display: block;
           position: relative;
+          width: 100%;
+          height: 100%;
+          min-height: 200px;
         }
 
         .loader-overlay {
@@ -112,6 +128,13 @@ class IeOccidenteLoader extends HTMLElement {
         .loader-overlay.active {
           opacity: 1;
           pointer-events: all;
+        }
+
+        .loader-overlay.contained {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          border-radius: inherit;
         }
 
         .loader-container {
@@ -151,7 +174,8 @@ class IeOccidenteLoader extends HTMLElement {
 
         .escudo-img {
           width: 90px;
-          height: auto;
+          height: 90px;
+          object-fit: contain;
           display: block;
         }
 
@@ -175,7 +199,7 @@ class IeOccidenteLoader extends HTMLElement {
         }
       </style>
 
-      <div class="loader-overlay">
+      <div class="loader-overlay${this.hasAttribute('contained') ? ' contained' : ''}">
         <div class="loader-container">
           <div class="loader-ring-wrap">
             <div class="loader-spinner"></div>

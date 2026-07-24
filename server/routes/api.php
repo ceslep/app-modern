@@ -207,6 +207,33 @@ switch ($resource) {
         $controller = new CandidateController();
         match ($method) {
             'GET' => $controller->index(),
+            'POST' => match ($id) {
+                'check' => $controller->checkEnrolled(),
+                'enroll-bulk' => $controller->enrollBulk(),
+                default => error('Not found', 404),
+            },
+            'PUT' => match ($subAction) {
+                'enroll' => $controller->enroll($id ?? ''),
+                default => error('Not found', 404),
+            },
+            'DELETE' => $controller->delete($id ?? ''),
+            default => error('Method not allowed', 405),
+        };
+        break;
+
+    case 'codes':
+        requireAuth();
+        require_once __DIR__ . '/../controllers/CodeController.php';
+        $controller = new CodeController();
+        match ($method) {
+            'GET' => match ($id) {
+                'next' => $controller->nextCode(),
+                default => $controller->index(),
+            },
+            'POST' => match ($id) {
+                'assign' => $controller->assign(),
+                default => error('Not found', 404),
+            },
             'DELETE' => $controller->delete($id ?? ''),
             default => error('Method not allowed', 405),
         };
